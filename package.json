@@ -1,0 +1,22 @@
+{
+  "name": "metro-os",
+  "version": "0.1.0",
+  "description": "Desktop operating system for managing and growing Metro Refined Racks eBay clothing resale business",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean"
+  },
+  "workspaces": [
+    "apps/desktop",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "turbo": "^1.10.0",
+    "typescript": "^5.1.6"
+  }
+}

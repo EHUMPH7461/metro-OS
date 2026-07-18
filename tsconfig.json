@@ -1,32 +1,21 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "allowJs": true,
-    "strict": true,
-    "noEmit": true,
-    "isolatedModules": true,
-    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./apps/desktop/src/*"],
-      "@ui/*": ["./packages/ui/src/*"],
-      "@database/*": ["./packages/database/src/*"],
-      "@ai/*": ["./packages/ai/src/*"]
-    }
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "types": ["vitest/globals"]
   },
-  "include": ["apps/**/*.ts", "apps/**/*.tsx", "packages/**/*.ts"],
-  "references": [
-    { "path": "./apps/desktop" },
-    { "path": "./packages/database" },
-    { "path": "./packages/ui" },
-    { "path": "./packages/ai" }
-  ]
+  "include": ["src", "vite.config.ts"]
 }

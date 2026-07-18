@@ -1,0 +1,20 @@
+{
+  "name": "@metro/database",
+  "version": "0.1.0",
+  "description": "Metro OS database layer with Drizzle ORM",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "migrate": "node scripts/migrate.js"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.28.0",
+    "sqlite": "^5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.1.0",
+    "vitest": "^0.34.0"
+  }
+}

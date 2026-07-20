@@ -1,113 +1,39 @@
 # Metro Command Center Roadmap
 
-This roadmap sequences production capabilities while preserving the launch-tested `stable-working-v0.1.2` baseline. Sprint numbering describes product scope, not an automatic release commitment.
+## Sprint 1 - Completed
 
-## Sprint 1 — Command Center and inventory foundation (completed)
+Dashboard KPIs, inventory expansion, search, filtering, inline editing, unique SKU generation, profit calculations, and storage tracking are complete.
 
-Delivered:
+## Sprint 1.5 - Architecture hardening
 
-- Seven dashboard KPI cards.
-- Recent Activity and Quick Actions.
-- Expanded backward-compatible inventory schema.
-- Instant inventory search and status filtering.
-- Sortable columns and inline editing.
-- Unique `MRR-YYYY-NNNNNN` SKU generation.
-- Gross profit, net profit, and ROI calculations.
-- Searchable bin, rack, shelf, and drawer tracking.
-- Renderer and database tests plus application screenshots.
+This sprint prepares the active application for later modules without changing Sprint 1 behavior.
 
 Acceptance criteria:
 
-- Existing inventory loads after migration.
-- All required inventory fields can be persisted.
-- Generated SKUs do not duplicate existing SKUs.
-- Financial values update immediately and persist consistently.
-- Search includes item identity and all storage coordinates.
-- `npm install`, typecheck, tests, and production build pass.
+- Renderer responsibilities are split into feature, component, service, domain, and type boundaries.
+- Renderer and Electron share one dependency-free inventory contract.
+- Privileged inputs are runtime validated and failures are readable and serializable.
+- Schema changes are explicitly versioned, ordered, non-destructive, and migration-tested.
+- Interrupted persistence preserves or restores the previous database.
+- Packaged Electron uses a restrictive CSP while documented development exceptions support Vite.
+- Existing Sprint 1 tests and user flows remain intact; required validation passes.
 
-## Sprint 2 — Photo Manager
+## Sprint 2 - Photo Manager (planned)
 
-Scope:
+Attach, preview, reorder, rotate, remove, and select cover photos using managed local files and database metadata. Acceptance requires restart-safe metadata, clear missing-file handling, non-destructive removal policy, migration coverage, and Windows smoke tests.
 
-- Attach multiple photos to an inventory item.
-- Import, reorder, rotate, remove, and preview photos.
-- Track cover photo and photo readiness.
-- Store managed files locally with database metadata and recovery-safe paths.
-- Show missing-photo and upload-readiness states.
+## Sprint 3 - AI Listing Assistant (planned)
 
-Acceptance criteria:
+Generate editable titles, descriptions, item specifics, and pricing suggestions with explicit human approval. Acceptance requires protected credentials, source transparency, safe offline/error behavior, and no silent overwrites.
 
-- A user can add, reorder, rotate, select a cover, and remove photos without corrupting the inventory record.
-- Supported formats, file-size limits, and errors are clear.
-- Photo metadata survives restart and missing files are reported safely.
-- Removing an item or photo follows an explicit recoverable policy.
-- Existing databases migrate without losing inventory.
-- Automated tests cover metadata, file failure, and primary user flows; required validation and Windows smoke tests pass.
+## Sprint 4 - Analytics (planned)
 
-## Sprint 3 — AI Listing Assistant
+Add sales, margin, ROI, sell-through, aging, and trend views. Acceptance requires documented deterministic formulas, consistent filters, legacy/empty-state handling, and responsive measured performance.
 
-Scope:
+## Sprint 5 - eBay workflow, portability, backups, and packaging (planned)
 
-- Draft eBay-ready titles and descriptions from inventory attributes.
-- Suggest item specifics and pricing ranges.
-- Review photo readiness and identify missing information.
-- Preserve human review and approval before saving or publishing.
-- Provide offline and unavailable-service behavior.
+Add confirmed eBay publication/sync, CSV preview/import/export, verified backup/restore, and repeatable Windows packaging. Acceptance requires idempotent integrations, visible partial failures, duplicate protection, checksum-tested recovery, and clean-machine launch validation.
 
-Acceptance criteria:
+## Future ideas
 
-- AI suggestions never overwrite source inventory facts without confirmation.
-- Generated content shows its source inputs and can be edited or rejected.
-- Secrets remain outside the repository and renderer.
-- Timeouts, usage errors, and unavailable service states do not block inventory work.
-- Representative outputs and safety boundaries are tested; required validation passes.
-
-## Sprint 4 — Analytics
-
-Scope:
-
-- Sales, margin, ROI, sell-through, and inventory-aging views.
-- Trends by brand, category, supplier, status, and date range.
-- Operational alerts for stale listings and low-margin inventory.
-- Clear metric definitions and exportable summaries.
-
-Acceptance criteria:
-
-- Every displayed metric has a documented formula and deterministic tests.
-- Date and status filters produce consistent dashboard and report totals.
-- Empty, partial, and legacy data are handled without misleading results.
-- Normal inventory volumes remain responsive.
-- Required validation and visual regression review pass.
-
-## Sprint 5 — eBay workflow, data portability, backups, and packaging
-
-Scope:
-
-- Assisted eBay listing publication and status synchronization.
-- CSV inventory import and export with preview, validation, and error reporting.
-- Local backup, restore, and migration recovery workflows.
-- Repeatable Windows packaging and installer/release documentation.
-
-Acceptance criteria:
-
-- External publication requires a final user confirmation and records the result.
-- Synchronization is idempotent and exposes partial failures.
-- CSV import previews changes, rejects or reports invalid rows, and does not create duplicate SKUs.
-- Export includes the documented inventory contract.
-- Backup and restore are checksum-verified and tested with representative legacy data.
-- A clean Windows machine can install, launch, retain data, and uninstall without undocumented manual fixes.
-- Required validation, integration tests, backup/restore tests, and Windows release smoke tests pass.
-
-## Future release ideas
-
-- Orders, shipping, returns, and customer-service workflows.
-- Barcode/label printing and mobile-friendly intake.
-- Multi-location storage and cycle counting.
-- Inventory aging automation and repricing recommendations.
-- Consignor and supplier settlement reporting.
-- Scheduled reports and daily work queues.
-- Role-based access and shared synchronization if the product moves beyond one local operator.
-- Duplicate-photo and duplicate-item detection.
-- Marketplace expansion after the eBay workflow is stable.
-
-Future ideas require their own discovery, privacy review, architecture decision, and measurable acceptance criteria before entering a sprint.
+Orders, shipping, returns, barcode labels, mobile intake, multi-location counting, repricing, supplier settlements, scheduled work queues, shared synchronization, and duplicate detection remain discovery items, not implemented features.

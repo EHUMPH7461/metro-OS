@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "private": true,
   "description": "Desktop operations system for Metro Refined Racks",
-  "main": "dist-electron/main.js",
+  "main": "dist-electron/electron/main.js",
   "type": "module",
   "scripts": {
     "dev": "npm run build:electron && concurrently -k \"vite\" \"wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .\"",

@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
 import type { InventoryInput, InventoryItem } from '../shared/inventory.js';
 import type { InventoryPhoto, PhotoImportInput } from '../shared/photos.js';
+import type { ListingChecklist,ListingInput,ListingRecord } from '../shared/listings.js';
 import { MetroDomainError } from './errors.js';
 
 type InventoryRow = Record<string, unknown>;
@@ -15,7 +16,7 @@ type PersistenceFiles = {
   rmSync(path: string, options: { force: boolean }): void;
 };
 const require = createRequire(import.meta.url);
-export const INVENTORY_SCHEMA_VERSION = 3;
+export const INVENTORY_SCHEMA_VERSION = 4;
 let SQL: SqlJsStatic;
 let db: Database;
 let dbPath = '';
@@ -131,7 +132,10 @@ function addPhotoMetadata(database: Database) {
   database.run('CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_photos_primary ON inventory_photos(inventory_id) WHERE is_primary = 1');
 }
 
-const migrations = [addInventoryColumns, recalculateInventory, addPhotoMetadata];
+function addListingWorkspace(database:Database){database.run(`CREATE TABLE IF NOT EXISTS listings(
+ id INTEGER PRIMARY KEY AUTOINCREMENT,inventory_id INTEGER NOT NULL UNIQUE,listing_title TEXT NOT NULL DEFAULT '',description TEXT NOT NULL DEFAULT '',category TEXT NOT NULL DEFAULT '',condition TEXT NOT NULL DEFAULT '',brand TEXT NOT NULL DEFAULT '',department TEXT NOT NULL DEFAULT '',size TEXT NOT NULL DEFAULT '',color TEXT NOT NULL DEFAULT '',material TEXT NOT NULL DEFAULT '',style TEXT NOT NULL DEFAULT '',type TEXT NOT NULL DEFAULT '',model TEXT NOT NULL DEFAULT '',mpn TEXT NOT NULL DEFAULT '',upc TEXT NOT NULL DEFAULT '',country_of_manufacture TEXT NOT NULL DEFAULT '',list_price REAL NOT NULL DEFAULT 0,minimum_offer REAL NOT NULL DEFAULT 0,shipping_service TEXT NOT NULL DEFAULT '',shipping_charge REAL NOT NULL DEFAULT 0,handling_time INTEGER NOT NULL DEFAULT 0,return_policy TEXT NOT NULL DEFAULT '',ebay_item_id TEXT NOT NULL DEFAULT '',listing_url TEXT NOT NULL DEFAULT '',status TEXT NOT NULL DEFAULT 'Purchased',internal_notes TEXT NOT NULL DEFAULT '',checklist_json TEXT NOT NULL DEFAULT '{}',created_at TEXT NOT NULL,updated_at TEXT NOT NULL)`);database.run('CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status)');}
+
+const migrations = [addInventoryColumns, recalculateInventory, addPhotoMetadata,addListingWorkspace];
 
 export function runMigrations(database: Database) {
   const current = Number(database.exec('PRAGMA user_version')[0]?.values[0]?.[0] ?? 0);
@@ -167,6 +171,7 @@ export async function initializeDatabase() {
     notes TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL, updated_at TEXT NOT NULL
   )`);
   addPhotoMetadata(db);
+  addListingWorkspace(db);
   runMigrations(db);
   const count = Number(db.exec('SELECT COUNT(*) FROM inventory')[0]?.values[0]?.[0] ?? 0);
   if (count === 0) {
@@ -238,12 +243,20 @@ export function updateInventory(id: number, input: InventoryInput) {
 }
 
 export function deleteInventory(id: number) {
+  db.run('DELETE FROM listings WHERE inventory_id=:id', { ':id': id });
   db.run('DELETE FROM inventory_photos WHERE inventory_id=:id', { ':id': id });
   db.run('DELETE FROM inventory WHERE id=:id', { ':id': id });
   if (db.getRowsModified() === 0) throw new MetroDomainError('NOT_FOUND', 'Inventory record no longer exists.');
   saveDatabase();
   return true;
 }
+
+const emptyChecklist:ListingChecklist={photosComplete:false,primaryPhotoSelected:false,titleComplete:false,descriptionComplete:false,itemSpecificsComplete:false,pricingComplete:false,shippingComplete:false,readyToList:false};
+const listingFields=`id,inventory_id AS inventoryId,listing_title AS listingTitle,description,category,condition,brand,department,size,color,material,style,type,model,mpn,upc,country_of_manufacture AS countryOfManufacture,list_price AS listPrice,minimum_offer AS minimumOffer,shipping_service AS shippingService,shipping_charge AS shippingCharge,handling_time AS handlingTime,return_policy AS returnPolicy,ebay_item_id AS ebayItemId,listing_url AS listingUrl,status,internal_notes AS internalNotes,checklist_json AS checklistJson,created_at AS createdAt,updated_at AS updatedAt`;
+function listingFromRow(row:InventoryRow):ListingRecord{let checklist=emptyChecklist;try{checklist={...emptyChecklist,...JSON.parse(String(row.checklistJson??'{}'))};}catch{}const{checklistJson:_discard,...rest}=row;return{...rest,checklist} as unknown as ListingRecord;}
+export function getListing(inventoryId:number){const existing=rowsFromQuery(`SELECT ${listingFields} FROM listings WHERE inventory_id=:inventoryId`,{':inventoryId':inventoryId})[0];if(existing)return listingFromRow(existing);const item=rowsFromQuery('SELECT * FROM inventory WHERE id=:id',{':id':inventoryId})[0];if(!item)throw new MetroDomainError('NOT_FOUND','Inventory record no longer exists.');const now=new Date().toISOString();db.run(`INSERT INTO listings(inventory_id,listing_title,category,condition,brand,department,size,color,list_price,ebay_item_id,created_at,updated_at) VALUES(:id,:title,:category,:condition,:brand,:department,:size,:color,:price,:ebayItemId,:now,:now)`,{':id':inventoryId,':title':item.title,':category':item.category,':condition':item.condition,':brand':item.brand,':department':item.gender,':size':item.size,':color':item.color,':price':item.list_price,':ebayItemId':item.ebay_item_id,':now':now});saveDatabase();return getListing(inventoryId);}
+export function saveListing(inventoryId:number,input:ListingInput){getListing(inventoryId);if(input.listingTitle.length>80)throw new MetroDomainError('VALIDATION','Listing titles cannot exceed 80 characters.',{field:'listingTitle'});if(input.checklist.readyToList&&input.listingTitle.trim().length===0)throw new MetroDomainError('VALIDATION','A valid title is required before Ready to List.');const now=new Date().toISOString();db.run(`UPDATE listings SET listing_title=:listingTitle,description=:description,category=:category,condition=:condition,brand=:brand,department=:department,size=:size,color=:color,material=:material,style=:style,type=:type,model=:model,mpn=:mpn,upc=:upc,country_of_manufacture=:countryOfManufacture,list_price=:listPrice,minimum_offer=:minimumOffer,shipping_service=:shippingService,shipping_charge=:shippingCharge,handling_time=:handlingTime,return_policy=:returnPolicy,ebay_item_id=:ebayItemId,listing_url=:listingUrl,status=:status,internal_notes=:internalNotes,checklist_json=:checklist,updated_at=:now WHERE inventory_id=:inventoryId`,{...Object.fromEntries(Object.entries(input).filter(([key])=>key!=='checklist').map(([key,value])=>[`:${key}`,value])),':checklist':JSON.stringify(input.checklist),':now':now,':inventoryId':inventoryId});saveDatabase();return getListing(inventoryId);}
+export function listListingInventory(){return listInventory().map(item=>({item,listing:getListing(item.id)}));}
 
 const photoFields = `id, inventory_id AS inventoryId, file_name AS fileName, original_file_name AS originalFileName,
   mime_type AS mimeType, file_size AS fileSize, file_path AS filePath, thumbnail_path AS thumbnailPath,

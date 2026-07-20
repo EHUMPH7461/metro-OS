@@ -12,6 +12,7 @@ declare global {
         delete: (id: number) => Promise<IpcResult<boolean>>;
       };
       photos: import('../../shared/photos').PhotoApi;
+      listings: import('../../shared/listings').ListingApi;
     };
   }
 }

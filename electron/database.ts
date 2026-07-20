@@ -1,6 +1,8 @@
-import Database from 'better-sqlite3';
 import { app } from 'electron';
+import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
+import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
 
 export type InventoryInput = {
   sku: string;
@@ -14,13 +16,34 @@ export type InventoryInput = {
   status: string;
 };
 
-let db: Database.Database;
+type InventoryRow = InventoryInput & { id: number; createdAt: string };
 
-export function initializeDatabase() {
-  const dbPath = path.join(app.getPath('userData'), 'metro-os.sqlite');
-  db = new Database(dbPath);
-  db.pragma('journal_mode = WAL');
-  db.exec(`
+const require = createRequire(import.meta.url);
+let SQL: SqlJsStatic;
+let db: Database;
+let dbPath = '';
+
+function saveDatabase() {
+  const bytes = db.export();
+  fs.writeFileSync(dbPath, Buffer.from(bytes));
+}
+
+function rowsFromQuery(sql: string, params: Record<string, unknown> = {}): InventoryRow[] {
+  const statement = db.prepare(sql);
+  statement.bind(params);
+  const rows: InventoryRow[] = [];
+  while (statement.step()) rows.push(statement.getAsObject() as unknown as InventoryRow);
+  statement.free();
+  return rows;
+}
+
+export async function initializeDatabase() {
+  const packageDir = path.dirname(require.resolve('sql.js/dist/sql-wasm.js'));
+  SQL = await initSqlJs({ locateFile: (file) => path.join(packageDir, file) });
+  dbPath = path.join(app.getPath('userData'), 'metro-os.sqlite');
+  db = fs.existsSync(dbPath) ? new SQL.Database(fs.readFileSync(dbPath)) : new SQL.Database();
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS inventory (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       sku TEXT NOT NULL UNIQUE,
@@ -36,42 +59,53 @@ export function initializeDatabase() {
     );
   `);
 
-  const count = db.prepare('SELECT COUNT(*) as count FROM inventory').get() as { count: number };
-  if (count.count === 0) {
-    const insert = db.prepare(`INSERT INTO inventory
-      (sku,title,category,brand,size,quantity,cost,list_price,status,created_at)
-      VALUES (@sku,@title,@category,@brand,@size,@quantity,@cost,@listPrice,@status,@createdAt)`);
+  const count = db.exec('SELECT COUNT(*) AS count FROM inventory')[0]?.values[0]?.[0] ?? 0;
+  if (Number(count) === 0) {
     const now = new Date().toISOString();
-    const rows = [
-      { sku: 'MRR-1001', title: "Levi's 501 Straight Leg Jeans", category: 'Jeans', brand: "Levi's", size: '36x32', quantity: 1, cost: 12, listPrice: 39.99, status: 'Active', createdAt: now },
-      { sku: 'MRR-1002', title: 'Nike Air Max Running Shoes', category: 'Shoes', brand: 'Nike', size: '11', quantity: 1, cost: 18, listPrice: 64.99, status: 'Draft', createdAt: now },
-      { sku: 'MRR-1003', title: 'The North Face Puffer Jacket', category: 'Jackets', brand: 'The North Face', size: 'XL', quantity: 1, cost: 25, listPrice: 89.99, status: 'Active', createdAt: now }
+    const rows: InventoryInput[] = [
+      { sku: 'MRR-1001', title: "Levi's 501 Straight Leg Jeans", category: 'Jeans', brand: "Levi's", size: '36x32', quantity: 1, cost: 12, listPrice: 39.99, status: 'Active' },
+      { sku: 'MRR-1002', title: 'Nike Air Max Running Shoes', category: 'Shoes', brand: 'Nike', size: '11', quantity: 1, cost: 18, listPrice: 64.99, status: 'Draft' },
+      { sku: 'MRR-1003', title: 'The North Face Puffer Jacket', category: 'Jackets', brand: 'The North Face', size: 'XL', quantity: 1, cost: 25, listPrice: 89.99, status: 'Active' }
     ];
-    const seed = db.transaction(() => rows.forEach((row) => insert.run(row)));
-    seed();
+    for (const row of rows) {
+      db.run(`INSERT INTO inventory
+        (sku,title,category,brand,size,quantity,cost,list_price,status,created_at)
+        VALUES (:sku,:title,:category,:brand,:size,:quantity,:cost,:listPrice,:status,:createdAt)`,
+        { ':sku': row.sku, ':title': row.title, ':category': row.category, ':brand': row.brand, ':size': row.size, ':quantity': row.quantity, ':cost': row.cost, ':listPrice': row.listPrice, ':status': row.status, ':createdAt': now });
+    }
+    saveDatabase();
   }
 }
 
 export function listInventory() {
-  return db.prepare(`SELECT id, sku, title, category, brand, size, quantity, cost,
-    list_price as listPrice, status, created_at as createdAt FROM inventory ORDER BY id DESC`).all();
+  return rowsFromQuery(`SELECT id, sku, title, category, brand, size, quantity, cost,
+    list_price AS listPrice, status, created_at AS createdAt FROM inventory ORDER BY id DESC`);
 }
 
 export function createInventory(input: InventoryInput) {
-  const result = db.prepare(`INSERT INTO inventory
+  const createdAt = new Date().toISOString();
+  db.run(`INSERT INTO inventory
     (sku,title,category,brand,size,quantity,cost,list_price,status,created_at)
-    VALUES (@sku,@title,@category,@brand,@size,@quantity,@cost,@listPrice,@status,@createdAt)`)
-    .run({ ...input, createdAt: new Date().toISOString() });
-  return db.prepare('SELECT * FROM inventory WHERE id = ?').get(result.lastInsertRowid);
+    VALUES (:sku,:title,:category,:brand,:size,:quantity,:cost,:listPrice,:status,:createdAt)`,
+    { ':sku': input.sku, ':title': input.title, ':category': input.category, ':brand': input.brand, ':size': input.size, ':quantity': input.quantity, ':cost': input.cost, ':listPrice': input.listPrice, ':status': input.status, ':createdAt': createdAt });
+  const id = Number(db.exec('SELECT last_insert_rowid()')[0].values[0][0]);
+  saveDatabase();
+  return rowsFromQuery(`SELECT id, sku, title, category, brand, size, quantity, cost,
+    list_price AS listPrice, status, created_at AS createdAt FROM inventory WHERE id = :id`, { ':id': id })[0];
 }
 
 export function updateInventory(id: number, input: InventoryInput) {
-  db.prepare(`UPDATE inventory SET sku=@sku,title=@title,category=@category,brand=@brand,
-    size=@size,quantity=@quantity,cost=@cost,list_price=@listPrice,status=@status WHERE id=@id`)
-    .run({ ...input, id });
-  return db.prepare('SELECT * FROM inventory WHERE id = ?').get(id);
+  db.run(`UPDATE inventory SET sku=:sku,title=:title,category=:category,brand=:brand,
+    size=:size,quantity=:quantity,cost=:cost,list_price=:listPrice,status=:status WHERE id=:id`,
+    { ':sku': input.sku, ':title': input.title, ':category': input.category, ':brand': input.brand, ':size': input.size, ':quantity': input.quantity, ':cost': input.cost, ':listPrice': input.listPrice, ':status': input.status, ':id': id });
+  saveDatabase();
+  return rowsFromQuery(`SELECT id, sku, title, category, brand, size, quantity, cost,
+    list_price AS listPrice, status, created_at AS createdAt FROM inventory WHERE id = :id`, { ':id': id })[0];
 }
 
 export function deleteInventory(id: number) {
-  return db.prepare('DELETE FROM inventory WHERE id = ?').run(id).changes > 0;
+  db.run('DELETE FROM inventory WHERE id = :id', { ':id': id });
+  const changed = db.getRowsModified() > 0;
+  if (changed) saveDatabase();
+  return changed;
 }

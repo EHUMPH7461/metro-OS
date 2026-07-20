@@ -1,41 +1,39 @@
-# Metro OS
+# Metro OS Sprint 1.1
 
-Metro OS is a Windows-first desktop operations system for **Metro Refined Racks**, built to manage eBay inventory, listings, orders, financials, reports, and future AI-assisted workflows.
+Windows desktop command center for Metro Refined Racks.
 
-## Sprint 1 foundation
+## What changed
 
-- Electron desktop shell with a secure preload bridge
-- React + TypeScript + Vite renderer
-- Tailwind-powered dashboard styling
-- Local SQLite database
-- Drizzle schema for inventory
-- Inventory create, list, search, and delete workflows
-- Seed inventory for first launch
-- Vitest test harness
-- GitHub Actions CI
+Sprint 1.1 replaces the native `better-sqlite3` addon with `sql.js`. This removes the Node/Electron ABI mismatch that prevented the original Sprint 1 package from launching on Windows.
 
-## Run locally
+## Requirements
 
-```bash
+- Windows 10 or 11
+- Node.js 22 LTS
+
+## Start Metro OS
+
+Open Command Prompt in this folder and run:
+
+```cmd
 npm install
 npm run dev
 ```
 
-## Verify
+The first command downloads the project dependencies. The second command builds the Electron process, starts Vite, and opens the Metro OS desktop window.
 
-```bash
+## Verification
+
+```cmd
 npm run typecheck
 npm test
 npm run build
 ```
 
-## Current status
+Inventory is stored locally in the Metro OS application data folder as `metro-os.sqlite`.
 
-Sprint 1 establishes the desktop architecture and inventory workflow. It does **not** yet include eBay OAuth, live listing synchronization, order imports, or a verified Windows installer.
+## Professional Windows releases
 
-## Planned sprints
+Metro OS includes a Windows GitHub Actions workflow at `.github/workflows/windows-release.yml`. Run it manually from the Actions tab to create downloadable installer and portable application artifacts on a real Windows runner.
 
-1. Desktop foundation and inventory
-2. eBay authentication and synchronization
-3. AI listing and pricing tools
-4. Financial analytics and reporting
+For a local Windows build, double-click `BUILD_WINDOWS_APP.bat`. The script performs a clean install before compiling, preventing stale or incomplete `node_modules` folders from causing missing `tsc` errors.

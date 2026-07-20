@@ -25,8 +25,8 @@ function createWindow() {
   else void win.loadFile(path.join(__dirname, '../dist/index.html'));
 }
 
-app.whenReady().then(() => {
-  initializeDatabase();
+app.whenReady().then(async () => {
+  await initializeDatabase();
   ipcMain.handle('inventory:list', () => listInventory());
   ipcMain.handle('inventory:create', (_event, input) => createInventory(input));
   ipcMain.handle('inventory:update', (_event, id, input) => updateInventory(id, input));

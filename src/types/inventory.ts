@@ -1,4 +1,5 @@
 export type { InventoryInput, InventoryItem, InventoryStatus, IpcResult, MetroError } from '../../shared/inventory';
+export type { InventoryPhoto, PhotoImportInput, PhotoApi } from '../../shared/photos';
 import type { InventoryInput, InventoryItem, IpcResult } from '../../shared/inventory';
 
 declare global {
@@ -10,6 +11,7 @@ declare global {
         update: (id: number, input: InventoryInput) => Promise<IpcResult<InventoryItem>>;
         delete: (id: number) => Promise<IpcResult<boolean>>;
       };
+      photos: import('../../shared/photos').PhotoApi;
     };
   }
 }

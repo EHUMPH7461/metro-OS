@@ -3,22 +3,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
-
-export type InventoryInput = {
-  sku?: string; title: string; brand?: string; category?: string; gender?: string; size?: string;
-  color?: string; condition?: string; purchasePrice?: number; listPrice?: number; shippingCost?: number;
-  ebayFees?: number; quantity?: number; bin?: string; rack?: string; shelf?: string; drawer?: string;
-  supplier?: string; purchaseDate?: string; listingDate?: string; soldDate?: string; ebayItemId?: string;
-  status?: string; notes?: string;
-};
+import type { InventoryInput, InventoryItem } from '../shared/inventory.js';
+import { MetroDomainError } from './errors.js';
 
 type InventoryRow = Record<string, unknown>;
+type PersistenceFiles = {
+  writeFileSync(path: string, data: Uint8Array): void;
+  existsSync(path: string): boolean;
+  renameSync(from: string, to: string): void;
+  rmSync(path: string, options: { force: boolean }): void;
+};
 const require = createRequire(import.meta.url);
+export const INVENTORY_SCHEMA_VERSION = 2;
 let SQL: SqlJsStatic;
 let db: Database;
 let dbPath = '';
 
-export function calculateFinancials(input: InventoryInput) {
+export function calculateFinancials(input: Partial<InventoryInput>) {
   const purchasePrice = Number(input.purchasePrice ?? 0);
   const listPrice = Number(input.listPrice ?? 0);
   const shippingCost = Number(input.shippingCost ?? 0);
@@ -41,8 +42,38 @@ export function nextSku(existing: string[], year = new Date().getFullYear()) {
   return sku;
 }
 
+export function persistDatabaseFile(target: string, bytes: Uint8Array, files: PersistenceFiles = fs) {
+  const temporary = `${target}.tmp`;
+  const backup = `${target}.bak`;
+  let previousMoved = false;
+  try {
+    files.rmSync(temporary, { force: true });
+    files.rmSync(backup, { force: true });
+    files.writeFileSync(temporary, Buffer.from(bytes));
+    if (files.existsSync(target)) {
+      files.renameSync(target, backup);
+      previousMoved = true;
+    }
+    files.renameSync(temporary, target);
+    files.rmSync(backup, { force: true });
+  } catch (error) {
+    try {
+      files.rmSync(temporary, { force: true });
+      if (previousMoved && !files.existsSync(target) && files.existsSync(backup)) files.renameSync(backup, target);
+    } catch (restoreError) {
+      console.error('Database restore failed', restoreError);
+    }
+    throw new MetroDomainError('PERSISTENCE', 'Inventory changes could not be saved safely.', { retryable: true });
+  }
+}
+
 function saveDatabase() {
-  fs.writeFileSync(dbPath, Buffer.from(db.export()));
+  try {
+    persistDatabaseFile(dbPath, db.export());
+  } catch (error) {
+    if (fs.existsSync(dbPath)) db = new SQL.Database(fs.readFileSync(dbPath));
+    throw error;
+  }
 }
 
 function rowsFromQuery(sql: string, params: Record<string, unknown> = {}) {
@@ -64,15 +95,36 @@ const columns: Record<string, string> = {
   updated_at: "TEXT NOT NULL DEFAULT ''"
 };
 
-function migrateInventory() {
-  const existing = new Set((db.exec('PRAGMA table_info(inventory)')[0]?.values ?? []).map((row) => String(row[1])));
+function addInventoryColumns(database: Database) {
+  const existing = new Set((database.exec('PRAGMA table_info(inventory)')[0]?.values ?? []).map((row) => String(row[1])));
   for (const [name, definition] of Object.entries(columns)) {
-    if (!existing.has(name)) db.run(`ALTER TABLE inventory ADD COLUMN ${name} ${definition}`);
+    if (!existing.has(name)) database.run(`ALTER TABLE inventory ADD COLUMN ${name} ${definition}`);
   }
-  if (existing.has('cost')) db.run('UPDATE inventory SET purchase_price = cost WHERE purchase_price = 0');
-  db.run("UPDATE inventory SET updated_at = created_at WHERE updated_at = ''");
-  db.run(`UPDATE inventory SET profit = list_price - purchase_price - shipping_cost - ebay_fees,
+  if (existing.has('cost')) database.run('UPDATE inventory SET purchase_price = cost WHERE purchase_price = 0');
+  database.run("UPDATE inventory SET updated_at = created_at WHERE updated_at = ''");
+}
+
+function recalculateInventory(database: Database) {
+  database.run(`UPDATE inventory SET profit = list_price - purchase_price - shipping_cost - ebay_fees,
     roi = CASE WHEN purchase_price > 0 THEN ((list_price - purchase_price - shipping_cost - ebay_fees) / purchase_price) * 100 ELSE 0 END`);
+}
+
+const migrations = [addInventoryColumns, recalculateInventory];
+
+export function runMigrations(database: Database) {
+  const current = Number(database.exec('PRAGMA user_version')[0]?.values[0]?.[0] ?? 0);
+  if (current > INVENTORY_SCHEMA_VERSION) throw new MetroDomainError('UNEXPECTED', 'This database was created by a newer Metro OS version.');
+  for (let version = current + 1; version <= INVENTORY_SCHEMA_VERSION; version += 1) {
+    database.run('BEGIN');
+    try {
+      migrations[version - 1](database);
+      database.run(`PRAGMA user_version = ${version}`);
+      database.run('COMMIT');
+    } catch (error) {
+      database.run('ROLLBACK');
+      throw new MetroDomainError('UNEXPECTED', `Database migration ${version} failed.`);
+    }
+  }
 }
 
 export async function initializeDatabase() {
@@ -92,12 +144,13 @@ export async function initializeDatabase() {
     sold_date TEXT NOT NULL DEFAULT '', ebay_item_id TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'Draft',
     notes TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL, updated_at TEXT NOT NULL
   )`);
-  migrateInventory();
+  runMigrations(db);
   const count = Number(db.exec('SELECT COUNT(*) FROM inventory')[0]?.values[0]?.[0] ?? 0);
   if (count === 0) {
+    const seed = (overrides: Partial<InventoryInput>): InventoryInput => ({ sku: '', title: '', brand: '', category: '', gender: '', size: '', color: '', condition: '', purchasePrice: 0, listPrice: 0, shippingCost: 0, ebayFees: 0, quantity: 1, bin: '', rack: '', shelf: '', drawer: '', supplier: '', purchaseDate: '', listingDate: '', soldDate: '', ebayItemId: '', status: 'Draft', notes: '', ...overrides });
     for (const row of [
-      { title: "Levi's 501 Straight Leg Jeans", brand: "Levi's", category: 'Jeans', size: '36x32', purchasePrice: 12, listPrice: 39.99, bin: 'B-12', rack: 'R1', status: 'Active' },
-      { title: 'Nike Air Max Running Shoes', brand: 'Nike', category: 'Shoes', size: '11', purchasePrice: 18, listPrice: 64.99, shelf: 'S2', status: 'Draft' }
+      seed({ title: "Levi's 501 Straight Leg Jeans", brand: "Levi's", category: 'Jeans', size: '36x32', purchasePrice: 12, listPrice: 39.99, bin: 'B-12', rack: 'R1', status: 'Active' }),
+      seed({ title: 'Nike Air Max Running Shoes', brand: 'Nike', category: 'Shoes', size: '11', purchasePrice: 18, listPrice: 64.99, shelf: 'S2' })
     ]) createInventory(row);
   }
   saveDatabase();
@@ -110,7 +163,7 @@ const selectFields = `id, sku, title, brand, category, gender, size, color, cond
   ebay_item_id AS ebayItemId, status, notes, created_at AS createdAt, updated_at AS updatedAt`;
 
 export function listInventory() {
-  return rowsFromQuery(`SELECT ${selectFields} FROM inventory ORDER BY id DESC`);
+  return rowsFromQuery(`SELECT ${selectFields} FROM inventory ORDER BY id DESC`) as unknown as InventoryItem[];
 }
 
 function normalized(input: InventoryInput, sku: string) {
@@ -134,36 +187,35 @@ function params(row: ReturnType<typeof normalized>) {
 }
 
 export function createInventory(input: InventoryInput) {
-  const existing = listInventory().map((row) => String(row.sku));
+  const existing = listInventory().map((row) => row.sku);
   const sku = input.sku?.trim() || nextSku(existing);
-  if (existing.includes(sku)) throw new Error(`SKU ${sku} already exists`);
+  if (existing.includes(sku)) throw new MetroDomainError('CONFLICT', `SKU ${sku} already exists.`, { field: 'sku' });
   const row = normalized(input, sku);
   const now = new Date().toISOString();
-  db.run(`INSERT INTO inventory (
-    sku,title,brand,category,gender,size,color,condition,purchase_price,list_price,shipping_cost,ebay_fees,
-    profit,roi,quantity,bin,rack,shelf,drawer,supplier,purchase_date,listing_date,sold_date,ebay_item_id,status,
-    notes,created_at,updated_at
-  ) VALUES (
-    :sku,:title,:brand,:category,:gender,:size,:color,:condition,:purchasePrice,:listPrice,:shippingCost,:ebayFees,
-    :profit,:roi,:quantity,:bin,:rack,:shelf,:drawer,:supplier,:purchaseDate,:listingDate,:soldDate,:ebayItemId,:status,
-    :notes,:createdAt,:updatedAt
-  )`, { ...params(row), ':createdAt': now, ':updatedAt': now });
+  db.run(`INSERT INTO inventory (sku,title,brand,category,gender,size,color,condition,purchase_price,list_price,shipping_cost,ebay_fees,
+    profit,roi,quantity,bin,rack,shelf,drawer,supplier,purchase_date,listing_date,sold_date,ebay_item_id,status,notes,created_at,updated_at)
+    VALUES (:sku,:title,:brand,:category,:gender,:size,:color,:condition,:purchasePrice,:listPrice,:shippingCost,:ebayFees,
+    :profit,:roi,:quantity,:bin,:rack,:shelf,:drawer,:supplier,:purchaseDate,:listingDate,:soldDate,:ebayItemId,:status,:notes,:createdAt,:updatedAt)`,
+  { ...params(row), ':createdAt': now, ':updatedAt': now });
   const id = Number(db.exec('SELECT last_insert_rowid()')[0].values[0][0]);
   saveDatabase();
-  return rowsFromQuery(`SELECT ${selectFields} FROM inventory WHERE id=:id`, { ':id': id })[0];
+  return rowsFromQuery(`SELECT ${selectFields} FROM inventory WHERE id=:id`, { ':id': id })[0] as unknown as InventoryItem;
 }
 
 export function updateInventory(id: number, input: InventoryInput) {
   const current = rowsFromQuery('SELECT sku FROM inventory WHERE id=:id', { ':id': id })[0];
-  const row = normalized(input, input.sku?.trim() || String(current?.sku ?? ''));
+  if (!current) throw new MetroDomainError('NOT_FOUND', 'Inventory record no longer exists.');
+  const row = normalized(input, input.sku?.trim() || String(current.sku));
+  const duplicate = rowsFromQuery('SELECT id FROM inventory WHERE sku=:sku AND id<>:id', { ':sku': row.sku, ':id': id })[0];
+  if (duplicate) throw new MetroDomainError('CONFLICT', `SKU ${row.sku} already exists.`, { field: 'sku' });
   db.run(`UPDATE inventory SET ${writeFields}, updated_at=:updatedAt WHERE id=:id`, { ...params(row), ':updatedAt': new Date().toISOString(), ':id': id });
   saveDatabase();
-  return rowsFromQuery(`SELECT ${selectFields} FROM inventory WHERE id=:id`, { ':id': id })[0];
+  return rowsFromQuery(`SELECT ${selectFields} FROM inventory WHERE id=:id`, { ':id': id })[0] as unknown as InventoryItem;
 }
 
 export function deleteInventory(id: number) {
   db.run('DELETE FROM inventory WHERE id=:id', { ':id': id });
-  const changed = db.getRowsModified() > 0;
-  if (changed) saveDatabase();
-  return changed;
+  if (db.getRowsModified() === 0) throw new MetroDomainError('NOT_FOUND', 'Inventory record no longer exists.');
+  saveDatabase();
+  return true;
 }

@@ -21,6 +21,7 @@ describe('inventory domain', () => {
     expect(db.exec('SELECT sku, purchase_price, updated_at FROM inventory')[0].values[0])
       .toEqual(['MRR-1001', 12, '2026-01-01']);
     expect(db.exec('PRAGMA user_version')[0].values[0][0]).toBe(INVENTORY_SCHEMA_VERSION);
+    expect(db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='inventory_photos'")[0].values[0][0]).toBe('inventory_photos');
     expect(() => runMigrations(db)).not.toThrow();
   });
 

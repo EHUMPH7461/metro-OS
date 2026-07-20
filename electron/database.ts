@@ -4,6 +4,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
 import type { InventoryInput, InventoryItem } from '../shared/inventory.js';
+import type { InventoryPhoto, PhotoImportInput } from '../shared/photos.js';
 import { MetroDomainError } from './errors.js';
 
 type InventoryRow = Record<string, unknown>;
@@ -14,7 +15,7 @@ type PersistenceFiles = {
   rmSync(path: string, options: { force: boolean }): void;
 };
 const require = createRequire(import.meta.url);
-export const INVENTORY_SCHEMA_VERSION = 2;
+export const INVENTORY_SCHEMA_VERSION = 3;
 let SQL: SqlJsStatic;
 let db: Database;
 let dbPath = '';
@@ -109,7 +110,28 @@ function recalculateInventory(database: Database) {
     roi = CASE WHEN purchase_price > 0 THEN ((list_price - purchase_price - shipping_cost - ebay_fees) / purchase_price) * 100 ELSE 0 END`);
 }
 
-const migrations = [addInventoryColumns, recalculateInventory];
+function addPhotoMetadata(database: Database) {
+  database.run(`CREATE TABLE IF NOT EXISTS inventory_photos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    inventory_id INTEGER NOT NULL,
+    file_name TEXT NOT NULL,
+    original_file_name TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    file_size INTEGER NOT NULL,
+    file_path TEXT NOT NULL,
+    thumbnail_path TEXT NOT NULL,
+    fingerprint TEXT NOT NULL,
+    position INTEGER NOT NULL DEFAULT 0,
+    is_primary INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE(inventory_id, fingerprint)
+  )`);
+  database.run('CREATE INDEX IF NOT EXISTS idx_inventory_photos_inventory ON inventory_photos(inventory_id, position)');
+  database.run('CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_photos_primary ON inventory_photos(inventory_id) WHERE is_primary = 1');
+}
+
+const migrations = [addInventoryColumns, recalculateInventory, addPhotoMetadata];
 
 export function runMigrations(database: Database) {
   const current = Number(database.exec('PRAGMA user_version')[0]?.values[0]?.[0] ?? 0);
@@ -144,6 +166,7 @@ export async function initializeDatabase() {
     sold_date TEXT NOT NULL DEFAULT '', ebay_item_id TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'Draft',
     notes TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL, updated_at TEXT NOT NULL
   )`);
+  addPhotoMetadata(db);
   runMigrations(db);
   const count = Number(db.exec('SELECT COUNT(*) FROM inventory')[0]?.values[0]?.[0] ?? 0);
   if (count === 0) {
@@ -156,14 +179,15 @@ export async function initializeDatabase() {
   saveDatabase();
 }
 
-const selectFields = `id, sku, title, brand, category, gender, size, color, condition,
-  purchase_price AS purchasePrice, list_price AS listPrice, shipping_cost AS shippingCost,
-  ebay_fees AS ebayFees, profit, roi, quantity, bin, rack, shelf, drawer, supplier,
-  purchase_date AS purchaseDate, listing_date AS listingDate, sold_date AS soldDate,
-  ebay_item_id AS ebayItemId, status, notes, created_at AS createdAt, updated_at AS updatedAt`;
+const selectFields = `i.id, i.sku, i.title, i.brand, i.category, i.gender, i.size, i.color, i.condition,
+  i.purchase_price AS purchasePrice, i.list_price AS listPrice, i.shipping_cost AS shippingCost,
+  i.ebay_fees AS ebayFees, i.profit, i.roi, i.quantity, i.bin, i.rack, i.shelf, i.drawer, i.supplier,
+  i.purchase_date AS purchaseDate, i.listing_date AS listingDate, i.sold_date AS soldDate,
+  i.ebay_item_id AS ebayItemId, i.status, i.notes, i.created_at AS createdAt, i.updated_at AS updatedAt,
+  (SELECT COUNT(*) FROM inventory_photos p WHERE p.inventory_id=i.id) AS photoCount`;
 
 export function listInventory() {
-  return rowsFromQuery(`SELECT ${selectFields} FROM inventory ORDER BY id DESC`) as unknown as InventoryItem[];
+  return rowsFromQuery(`SELECT ${selectFields} FROM inventory i ORDER BY i.id DESC`) as unknown as InventoryItem[];
 }
 
 function normalized(input: InventoryInput, sku: string) {
@@ -199,7 +223,7 @@ export function createInventory(input: InventoryInput) {
   { ...params(row), ':createdAt': now, ':updatedAt': now });
   const id = Number(db.exec('SELECT last_insert_rowid()')[0].values[0][0]);
   saveDatabase();
-  return rowsFromQuery(`SELECT ${selectFields} FROM inventory WHERE id=:id`, { ':id': id })[0] as unknown as InventoryItem;
+  return rowsFromQuery(`SELECT ${selectFields} FROM inventory i WHERE i.id=:id`, { ':id': id })[0] as unknown as InventoryItem;
 }
 
 export function updateInventory(id: number, input: InventoryInput) {
@@ -210,12 +234,74 @@ export function updateInventory(id: number, input: InventoryInput) {
   if (duplicate) throw new MetroDomainError('CONFLICT', `SKU ${row.sku} already exists.`, { field: 'sku' });
   db.run(`UPDATE inventory SET ${writeFields}, updated_at=:updatedAt WHERE id=:id`, { ...params(row), ':updatedAt': new Date().toISOString(), ':id': id });
   saveDatabase();
-  return rowsFromQuery(`SELECT ${selectFields} FROM inventory WHERE id=:id`, { ':id': id })[0] as unknown as InventoryItem;
+  return rowsFromQuery(`SELECT ${selectFields} FROM inventory i WHERE i.id=:id`, { ':id': id })[0] as unknown as InventoryItem;
 }
 
 export function deleteInventory(id: number) {
+  db.run('DELETE FROM inventory_photos WHERE inventory_id=:id', { ':id': id });
   db.run('DELETE FROM inventory WHERE id=:id', { ':id': id });
   if (db.getRowsModified() === 0) throw new MetroDomainError('NOT_FOUND', 'Inventory record no longer exists.');
   saveDatabase();
   return true;
+}
+
+const photoFields = `id, inventory_id AS inventoryId, file_name AS fileName, original_file_name AS originalFileName,
+  mime_type AS mimeType, file_size AS fileSize, file_path AS filePath, thumbnail_path AS thumbnailPath,
+  position, is_primary AS isPrimary, created_at AS createdAt, updated_at AS updatedAt`;
+
+export function inventoryExists(id: number) {
+  return Boolean(rowsFromQuery('SELECT id FROM inventory WHERE id=:id', { ':id': id })[0]);
+}
+
+export function listPhotos(inventoryId: number) {
+  return rowsFromQuery(`SELECT ${photoFields} FROM inventory_photos WHERE inventory_id=:inventoryId ORDER BY is_primary DESC, position, id`, { ':inventoryId': inventoryId })
+    .map((row) => ({ ...row, isPrimary: Boolean(row.isPrimary) })) as unknown as InventoryPhoto[];
+}
+
+export function photoFingerprintExists(inventoryId: number, fingerprint: string) {
+  return Boolean(rowsFromQuery('SELECT id FROM inventory_photos WHERE inventory_id=:inventoryId AND fingerprint=:fingerprint', { ':inventoryId': inventoryId, ':fingerprint': fingerprint })[0]);
+}
+
+export function createPhoto(input: PhotoImportInput, fileName: string, filePath: string, thumbnailPath: string) {
+  const current = listPhotos(input.inventoryId);
+  const now = new Date().toISOString();
+  db.run(`INSERT INTO inventory_photos (inventory_id,file_name,original_file_name,mime_type,file_size,file_path,thumbnail_path,fingerprint,position,is_primary,created_at,updated_at)
+    VALUES (:inventoryId,:fileName,:originalFileName,:mimeType,:fileSize,:filePath,:thumbnailPath,:fingerprint,:position,:isPrimary,:createdAt,:updatedAt)`, {
+      ':inventoryId': input.inventoryId, ':fileName': fileName, ':originalFileName': input.originalFileName, ':mimeType': input.mimeType,
+      ':fileSize': input.fileSize, ':filePath': filePath, ':thumbnailPath': thumbnailPath, ':fingerprint': input.fingerprint,
+      ':position': current.length, ':isPrimary': current.length === 0 ? 1 : 0, ':createdAt': now, ':updatedAt': now
+    });
+  saveDatabase();
+  return listPhotos(input.inventoryId).find((photo) => photo.fileName === fileName)!;
+}
+
+export function reorderPhotos(inventoryId: number, ids: number[]) {
+  const current = listPhotos(inventoryId);
+  if (ids.length !== current.length || new Set(ids).size !== ids.length || ids.some((id) => !current.some((photo) => photo.id === id))) throw new MetroDomainError('VALIDATION', 'Photo order is invalid.');
+  db.run('BEGIN');
+  try {
+    ids.forEach((id, position) => db.run('UPDATE inventory_photos SET position=:position,updated_at=:updatedAt WHERE id=:id AND inventory_id=:inventoryId', { ':position': position, ':updatedAt': new Date().toISOString(), ':id': id, ':inventoryId': inventoryId }));
+    db.run('COMMIT'); saveDatabase(); return listPhotos(inventoryId);
+  } catch (error) { db.run('ROLLBACK'); throw error; }
+}
+
+export function setPrimaryPhoto(inventoryId: number, photoId: number) {
+  if (!listPhotos(inventoryId).some((photo) => photo.id === photoId)) throw new MetroDomainError('NOT_FOUND', 'Photo no longer exists.');
+  db.run('BEGIN');
+  try {
+    db.run('UPDATE inventory_photos SET is_primary=0 WHERE inventory_id=:inventoryId', { ':inventoryId': inventoryId });
+    db.run('UPDATE inventory_photos SET is_primary=1,updated_at=:updatedAt WHERE inventory_id=:inventoryId AND id=:id', { ':updatedAt': new Date().toISOString(), ':inventoryId': inventoryId, ':id': photoId });
+    db.run('COMMIT'); saveDatabase(); return listPhotos(inventoryId);
+  } catch (error) { db.run('ROLLBACK'); throw error; }
+}
+
+export function photoById(inventoryId: number, photoId: number) { return listPhotos(inventoryId).find((photo) => photo.id === photoId); }
+
+export function deletePhotoRecord(inventoryId: number, photoId: number) {
+  const photo = photoById(inventoryId, photoId);
+  if (!photo) throw new MetroDomainError('NOT_FOUND', 'Photo no longer exists.');
+  db.run('DELETE FROM inventory_photos WHERE id=:id AND inventory_id=:inventoryId', { ':id': photoId, ':inventoryId': inventoryId });
+  const remaining = listPhotos(inventoryId);
+  if (photo.isPrimary && remaining[0]) db.run('UPDATE inventory_photos SET is_primary=1 WHERE id=:id', { ':id': remaining[0].id });
+  saveDatabase(); return listPhotos(inventoryId);
 }

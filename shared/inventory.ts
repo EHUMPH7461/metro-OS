@@ -7,6 +7,7 @@ export type InventoryItem = {
   ebayFees: number; profit: number; roi: number; quantity: number; bin: string; rack: string; shelf: string;
   drawer: string; supplier: string; purchaseDate: string; listingDate: string; soldDate: string;
   ebayItemId: string; status: InventoryStatus; notes: string; createdAt: string; updatedAt: string;
+  photoCount?: number; primaryThumbnailUrl?: string;
 };
 
 export type InventoryInput = Omit<InventoryItem, 'id' | 'profit' | 'roi' | 'createdAt' | 'updatedAt'>;

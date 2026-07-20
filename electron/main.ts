@@ -15,7 +15,7 @@ function createWindow() {
     minHeight: 700,
     backgroundColor: '#f5f7fb',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true
@@ -30,7 +30,7 @@ function createWindow() {
 function configureContentSecurityPolicy() {
   const dev = Boolean(process.env.VITE_DEV_SERVER_URL);
   const policy = dev
-    ? "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' http://localhost:5173 ws://localhost:5173; font-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+    ? "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' http://localhost:5173 ws://localhost:5173; font-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
     : "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'";
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => callback({
     responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [policy] }

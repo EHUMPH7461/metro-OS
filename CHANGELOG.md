@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Local Photo Manager with multi-file import, drag and drop, previews, ordering, primary-photo selection, and removal.
+- Version 3 sql.js photo metadata migration and managed Electron user-data storage.
+- Secure, validated photo IPC APIs and browser-generated thumbnails without native dependencies.
+
 All notable changes to Metro Command Center are documented here following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]

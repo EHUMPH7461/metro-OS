@@ -32,6 +32,10 @@ npm run build
 
 Inventory is stored locally in the Metro OS application data folder as `metro-os.sqlite`.
 
+## Sprint 2 Photo Manager
+
+Open **Photo Manager** from the sidebar to import, preview, order, and choose a primary product photo for any inventory record. Photos remain local and work offline. See [Photo Manager documentation](docs/PHOTO_MANAGER.md) for storage, backup, and security details.
+
 ## Stable Working Version
 
 1. Install Node.js 22 LTS.

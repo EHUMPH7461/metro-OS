@@ -1,10 +1,10 @@
-# Metro OS Sprint 1.1
+# Metro OS Sprint 1.2
 
 Windows desktop command center for Metro Refined Racks.
 
 ## What changed
 
-Sprint 1.1 replaces the native `better-sqlite3` addon with `sql.js`. This removes the Node/Electron ABI mismatch that prevented the original Sprint 1 package from launching on Windows.
+Sprint 1.2 uses `sql.js` for local inventory storage. This avoids the native Node/Electron ABI mismatch that prevented the original Sprint 1 package from launching on Windows.
 
 ## Requirements
 
@@ -32,8 +32,8 @@ npm run build
 
 Inventory is stored locally in the Metro OS application data folder as `metro-os.sqlite`.
 
-## Professional Windows releases
+## Stable Working Version
 
-Metro OS includes a Windows GitHub Actions workflow at `.github/workflows/windows-release.yml`. Run it manually from the Actions tab to create downloadable installer and portable application artifacts on a real Windows runner.
-
-For a local Windows build, double-click `BUILD_WINDOWS_APP.bat`. The script performs a clean install before compiling, preventing stale or incomplete `node_modules` folders from causing missing `tsc` errors.
+1. Install Node.js 22 LTS.
+2. Run `npm install`.
+3. Double-click `START_METRO_OS.bat`.

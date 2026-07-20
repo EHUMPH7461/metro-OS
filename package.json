@@ -1,6 +1,6 @@
 {
   "name": "metro-os",
-  "version": "0.1.4",
+  "version": "0.1.2",
   "private": true,
   "description": "Desktop operations system for Metro Refined Racks",
   "main": "dist-electron/main.js",
@@ -12,8 +12,6 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "preview": "vite preview",
-    "dist:win": "npm run build && electron-builder --win nsis portable --publish never",
-    "pack:win": "npm run build && electron-builder --win dir",
     "verify": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
@@ -23,7 +21,6 @@
     "sql.js": "^1.13.0"
   },
   "devDependencies": {
-    "@electron/packager": "^18.3.6",
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
@@ -38,35 +35,6 @@
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
     "vitest": "^2.1.8",
-    "wait-on": "^8.0.1",
-    "electron-builder": "^25.1.8"
-  },
-  "build": {
-    "appId": "com.metrorefinedracks.metroos",
-    "productName": "Metro OS",
-    "asar": false,
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "dist-electron/**/*",
-      "node_modules/sql.js/**/*",
-      "package.json"
-    ],
-    "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ],
-      "artifactName": "Metro-OS-${version}-${arch}.${ext}"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Metro OS"
-    }
+    "wait-on": "^8.0.1"
   }
 }

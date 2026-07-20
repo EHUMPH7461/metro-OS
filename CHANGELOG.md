@@ -4,6 +4,9 @@
 
 ### Added
 
+- Sprint 3 Listing Workspace with searchable readiness queue, filters, preparation checklist, listing fields, photo context, and workflow statuses.
+- Version 4 backward-compatible listing migration and validated listing IPC contracts.
+
 - Local Photo Manager with multi-file import, drag and drop, previews, ordering, primary-photo selection, and removal.
 - Version 3 sql.js photo metadata migration and managed Electron user-data storage.
 - Secure, validated photo IPC APIs and browser-generated thumbnails without native dependencies.

@@ -22,8 +22,11 @@ describe('inventory domain', () => {
       .toEqual(['MRR-1001', 12, '2026-01-01']);
     expect(db.exec('PRAGMA user_version')[0].values[0][0]).toBe(INVENTORY_SCHEMA_VERSION);
     expect(db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='inventory_photos'")[0].values[0][0]).toBe('inventory_photos');
+    expect(db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='listings'")[0].values[0][0]).toBe('listings');
     expect(() => runMigrations(db)).not.toThrow();
   });
+
+  it('preserves photo records while adding the listing workspace', async()=>{const SQL=await initSqlJs();const db=new SQL.Database();db.run(`CREATE TABLE inventory(id INTEGER PRIMARY KEY,sku TEXT UNIQUE,title TEXT,cost REAL,list_price REAL,created_at TEXT);CREATE TABLE inventory_photos(id INTEGER PRIMARY KEY,inventory_id INTEGER,file_name TEXT,original_file_name TEXT,mime_type TEXT,file_size INTEGER,file_path TEXT,thumbnail_path TEXT,fingerprint TEXT,position INTEGER,is_primary INTEGER,created_at TEXT,updated_at TEXT);PRAGMA user_version=3;INSERT INTO inventory VALUES(1,'MRR-1','Coat',10,40,'2026-01-01');INSERT INTO inventory_photos VALUES(1,1,'a.jpg','a.jpg','image/jpeg',10,'a','b','hash',0,1,'now','now')`);runMigrations(db);expect(db.exec('SELECT inventory_id,file_name FROM inventory_photos')[0].values[0]).toEqual([1,'a.jpg']);expect(db.exec('SELECT name FROM sqlite_master WHERE name=\'listings\'')[0].values[0][0]).toBe('listings')});
 
   it('restores the previous database when the atomic replacement fails', () => {
     const files = new Map<string, Uint8Array>([['metro.sqlite', new Uint8Array([1])]]);

@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
 import type { InventoryInput, InventoryItem } from '../shared/inventory.js';
 import type { InventoryPhoto, PhotoImportInput } from '../shared/photos.js';
+import type { AIHistory, AIResponse, AITask } from '../shared/ai.js';
 import type { ListingChecklist,ListingInput,ListingRecord } from '../shared/listings.js';
 import type { AnalyticsRecord } from '../shared/analytics.js';
 import { MetroDomainError } from './errors.js';
@@ -17,7 +18,7 @@ type PersistenceFiles = {
   rmSync(path: string, options: { force: boolean }): void;
 };
 const require = createRequire(import.meta.url);
-export const INVENTORY_SCHEMA_VERSION = 5;
+export const INVENTORY_SCHEMA_VERSION = 6;
 let SQL: SqlJsStatic;
 let db: Database;
 let dbPath = '';
@@ -138,7 +139,9 @@ function addListingWorkspace(database:Database){database.run(`CREATE TABLE IF NO
 
 function addAnalyticsFields(database:Database){const inventory=new Set((database.exec('PRAGMA table_info(inventory)')[0]?.values??[]).map(row=>String(row[1])));if(!inventory.has('sale_price'))database.run('ALTER TABLE inventory ADD COLUMN sale_price REAL');if(!inventory.has('other_selling_costs'))database.run('ALTER TABLE inventory ADD COLUMN other_selling_costs REAL');if(!inventory.has('sold_status_at'))database.run("ALTER TABLE inventory ADD COLUMN sold_status_at TEXT NOT NULL DEFAULT ''");const listings=new Set((database.exec('PRAGMA table_info(listings)')[0]?.values??[]).map(row=>String(row[1])));if(!listings.has('completed_at'))database.run("ALTER TABLE listings ADD COLUMN completed_at TEXT NOT NULL DEFAULT ''");if(inventory.has('sold_date'))database.run("UPDATE inventory SET sold_status_at=sold_date WHERE sold_status_at='' AND sold_date<>''");if(listings.has('updated_at')&&listings.has('status'))database.run("UPDATE listings SET completed_at=updated_at WHERE completed_at='' AND status IN ('Ready','Listed','Sold','Packed','Shipped','Delivered')");}
 
-const migrations = [addInventoryColumns, recalculateInventory, addPhotoMetadata,addListingWorkspace,addAnalyticsFields];
+function addAIHistory(database:Database){database.run("CREATE TABLE IF NOT EXISTS ai_generation_sessions(id INTEGER PRIMARY KEY AUTOINCREMENT,inventory_id INTEGER NOT NULL,task TEXT NOT NULL,provider TEXT NOT NULL,model TEXT NOT NULL,generated_at TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'Draft',source_hash TEXT NOT NULL,response_json TEXT NOT NULL,error_summary TEXT NOT NULL DEFAULT '',usage_json TEXT NOT NULL DEFAULT '{}',FOREIGN KEY(inventory_id) REFERENCES inventory(id) ON DELETE CASCADE)");database.run("CREATE INDEX IF NOT EXISTS idx_ai_sessions_inventory ON ai_generation_sessions(inventory_id,generated_at DESC)");database.run("CREATE TABLE IF NOT EXISTS ai_feedback_events(id INTEGER PRIMARY KEY AUTOINCREMENT,session_id INTEGER NOT NULL,suggestion_id TEXT NOT NULL,status TEXT NOT NULL,value TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL,FOREIGN KEY(session_id) REFERENCES ai_generation_sessions(id) ON DELETE CASCADE)")}
+
+const migrations = [addInventoryColumns, recalculateInventory, addPhotoMetadata,addListingWorkspace,addAnalyticsFields,addAIHistory];
 
 export function runMigrations(database: Database) {
   const current = Number(database.exec('PRAGMA user_version')[0]?.values[0]?.[0] ?? 0);
@@ -199,6 +202,10 @@ export function listInventory() {
 }
 
 export function listAnalyticsRecords():AnalyticsRecord[]{return listInventory().map(item=>{const listing=getListing(item.id);const financial=rowsFromQuery('SELECT sale_price AS salePrice,other_selling_costs AS otherSellingCosts,sold_status_at AS soldStatusAt FROM inventory WHERE id=:id',{':id':item.id})[0]??{};const listingTime=rowsFromQuery('SELECT completed_at AS listingCompletedAt FROM listings WHERE inventory_id=:id',{':id':item.id})[0]??{};const photos=rowsFromQuery('SELECT created_at AS createdAt FROM inventory_photos WHERE inventory_id=:id',{':id':item.id});return{...item,...financial,...listingTime,listing,photoCreatedAt:photos.map(photo=>String(photo.createdAt??'')).filter(Boolean)} as AnalyticsRecord})}
+export function saveAIHistory(inventoryId:number,task:AITask,response:AIResponse){db.run("INSERT INTO ai_generation_sessions(inventory_id,task,provider,model,generated_at,status,source_hash,response_json,usage_json) VALUES(:inventoryId,:task,:provider,:model,:generatedAt,'Draft',:sourceHash,:response,:usage)",{':inventoryId':inventoryId,':task':task,':provider':response.provider,':model':response.model,':generatedAt':response.generatedAt,':sourceHash':response.sourceHash,':response':JSON.stringify(response),':usage':JSON.stringify(response.usage??{})});const id=Number(db.exec('SELECT last_insert_rowid()')[0].values[0][0]);saveDatabase();return{id,...response}}
+export function listAIHistory(inventoryId:number):AIHistory[]{return rowsFromQuery('SELECT id,inventory_id AS inventoryId,task,provider,model,generated_at AS generatedAt,status,source_hash AS sourceHash,response_json AS response,error_summary AS errorSummary FROM ai_generation_sessions WHERE inventory_id=:inventoryId ORDER BY generated_at DESC',{':inventoryId':inventoryId}).map(row=>({...row,id:Number(row.id),inventoryId:Number(row.inventoryId),response:JSON.parse(String(row.response))})) as AIHistory[]}
+export function saveAIFeedback(sessionId:number,suggestionId:string,status:string,value:string){db.run('INSERT INTO ai_feedback_events(session_id,suggestion_id,status,value,created_at) VALUES(:sessionId,:suggestionId,:status,:value,:now)',{':sessionId':sessionId,':suggestionId':suggestionId.slice(0,100),':status':status.slice(0,20),':value':value.slice(0,10000),':now':new Date().toISOString()});db.run('UPDATE ai_generation_sessions SET status=:status WHERE id=:id',{':status':status,':id':sessionId});saveDatabase();return true}
+export function clearAIHistory(){db.run('DELETE FROM ai_feedback_events');db.run('DELETE FROM ai_generation_sessions');saveDatabase();return true}
 
 function normalized(input: InventoryInput, sku: string) {
   const financials = calculateFinancials(input);

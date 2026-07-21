@@ -59,7 +59,7 @@
     ],
     "win": {
       "executableName": "MetroCommandCenter",
-      "signAndEditExecutable": false,
+      "signExecutable": false,
       "target": ["nsis", "portable"],
       "artifactName": "MetroCommandCenter-${version}-Setup.${ext}"
     },

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0-rc.1] - 2026-07-21
+
+- Prepared Windows RC1 identity and artifact naming for Metro Command Center.
+- Corrected embedded Windows Product, Company, description, and file-version metadata while keeping code signing disabled.
+- Removed development wording from release-facing AI, Analytics, version, and browser sample-data surfaces.
+- Validated all 62 tests, schema 6 preservation, installer upgrade, installed/portable launch, and zero npm audit findings.
+- Added RC1 documentation and screenshots. No feature or database migration was added.
+
 ## 0.5.2-electron-maintenance-candidate
 
 - Upgraded the packaged Electron runtime from 33.4.11 to 43.2.0.

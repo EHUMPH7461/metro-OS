@@ -1,5 +1,7 @@
 # Metro Command Center
 
+Version `0.5.0-rc.1` is the current Windows release candidate. It packages the inventory, Photo Manager, Listing Workspace, Analytics, Action Center, and offline AI Listing Assistant workflows on Electron 43.2.0. See [RC1 preparation](docs/RELEASE_CANDIDATE_v0.5.0_RC1.md) and [RC1 release notes](docs/RELEASE_NOTES_v0.5.0_RC1.md). It is not a final release or tag.
+
 The `feature/electron-upgrade-v0.5.2` branch is a Phase B maintenance candidate that upgrades the packaged runtime to Electron 43.2.0 and clears the current npm audit without changing features or database schema 6. See [Electron Phase B](docs/ELECTRON_PHASE_B.md). It is not a release.
 
 The `feature/security-maintenance-v0.5.1` branch is a reviewed maintenance candidate for the v0.5 development line. It updates Vitest, electron-builder, and PostCSS without changing application features or schema version 6. See [v0.5.1 dependency maintenance](docs/DEPENDENCY_MAINTENANCE_V0_5_1.md). It is not a release.

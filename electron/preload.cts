@@ -15,5 +15,6 @@ contextBridge.exposeInMainWorld('metro', {
     delete: (inventoryId: number, photoId: number) => ipcRenderer.invoke('photos:delete', inventoryId, photoId)
   },
   listings:{queue:()=>ipcRenderer.invoke('listings:queue'),save:(inventoryId:number,input:unknown)=>ipcRenderer.invoke('listings:save',inventoryId,input)},
-  analytics:{snapshot:()=>ipcRenderer.invoke('analytics:snapshot'),exportCsv:(kind:string,csv:string)=>ipcRenderer.invoke('analytics:export-csv',kind,csv)}
+  analytics:{snapshot:()=>ipcRenderer.invoke('analytics:snapshot'),exportCsv:(kind:string,csv:string)=>ipcRenderer.invoke('analytics:export-csv',kind,csv)},
+  ai:{info:()=>ipcRenderer.invoke('ai:info'),generate:(request:unknown,settings:unknown)=>ipcRenderer.invoke('ai:generate',request,settings),history:(inventoryId:number)=>ipcRenderer.invoke('ai:history',inventoryId),feedback:(sessionId:number,suggestionId:string,status:string,value:string)=>ipcRenderer.invoke('ai:feedback',sessionId,suggestionId,status,value),clearHistory:()=>ipcRenderer.invoke('ai:clear-history'),test:(settings:unknown)=>ipcRenderer.invoke('ai:test',settings)}
 });

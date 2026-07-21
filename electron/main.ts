@@ -2,13 +2,15 @@ import { app, BrowserWindow, dialog, ipcMain, session } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createInventory, deleteInventory, initializeDatabase, listAnalyticsRecords, listInventory, listListingInventory, reorderPhotos, saveListing, setPrimaryPhoto, updateInventory } from './database.js';
+import { clearAIHistory, createInventory, deleteInventory, initializeDatabase, listAIHistory, listAnalyticsRecords, listInventory, listListingInventory, reorderPhotos, saveAIFeedback, saveAIHistory, saveListing, setPrimaryPhoto, updateInventory } from './database.js';
 import { asIpcResult } from './errors.js';
 import { validateInventoryId, validateInventoryInput } from './inventory-validation.js';
 import { deleteInventoryPhotoDirectory, deleteManagedPhoto, importManagedPhoto, listManagedPhotos } from './photo-storage.js';
 import { validatePhotoImport, validatePositiveId } from './photo-validation.js';
 import { validateListingInput } from './listing-validation.js';
 import { validateAnalyticsExport } from './analytics-export.js';
+import{generateWithRetry,LocalAIProvider,providerInfo}from'./ai-provider.js';
+import type{AIRequest,AISettings}from'../shared/ai.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -65,6 +67,12 @@ app.whenReady().then(async () => {
   ipcMain.handle('listings:save',(_event,inventoryId,input)=>asIpcResult(()=>saveListing(validatePositiveId(inventoryId,'inventoryId'),validateListingInput(input))));
   ipcMain.handle('analytics:snapshot',()=>asIpcResult(()=>listAnalyticsRecords()));
   ipcMain.handle('analytics:export-csv',async(_event,kind,csv)=>{try{const valid=validateAnalyticsExport(kind,csv);const result=await dialog.showSaveDialog({title:'Export analytics CSV',defaultPath:valid.fileName,filters:[{name:'CSV files',extensions:['csv']}]});if(result.canceled||!result.filePath)return{ok:true,data:{saved:false}};fs.writeFileSync(result.filePath,valid.csv,'utf8');return{ok:true,data:{saved:true,path:result.filePath}}}catch(error){return asIpcResult(()=>{throw error})}});
+  ipcMain.handle('ai:info',()=>asIpcResult(()=>providerInfo()));
+  ipcMain.handle('ai:generate',(_event,request:AIRequest,settings:AISettings)=>asIpcResult(async()=>{if(!request||!Number.isInteger(request.inventoryId)||request.inventoryId<=0)throw new Error('A valid inventory item is required.');if(settings.provider!=='local')throw new Error('Selected provider is not configured. Use the local offline provider or configure credentials in the main-process environment.');const response=await generateWithRetry(request,{...settings,timeoutMs:Math.min(120000,Math.max(1000,settings.timeoutMs))},undefined,1);const saved=saveAIHistory(request.inventoryId,request.task,response);return{...response,sessionId:saved.id}}));
+  ipcMain.handle('ai:history',(_event,inventoryId)=>asIpcResult(()=>listAIHistory(validatePositiveId(inventoryId,'inventoryId'))));
+  ipcMain.handle('ai:feedback',(_event,sessionId,suggestionId,status,value)=>asIpcResult(()=>saveAIFeedback(validatePositiveId(sessionId,'sessionId'),String(suggestionId),String(status),String(value))));
+  ipcMain.handle('ai:clear-history',()=>asIpcResult(()=>clearAIHistory()));
+  ipcMain.handle('ai:test',(_event,settings:AISettings)=>asIpcResult(()=>settings.provider==='local'?new LocalAIProvider().test():{ok:Boolean(process.env.OPENAI_API_KEY),message:process.env.OPENAI_API_KEY?'Credentials detected; adapter activation remains explicit.':'No provider credentials are configured.'}));
   createWindow();
   app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow());
 });

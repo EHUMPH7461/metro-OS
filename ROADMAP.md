@@ -1,5 +1,11 @@
 # Metro Command Center Roadmap
 
+## v0.5.1 — Dependency maintenance candidate
+
+- Phase A complete on its review branch: Vitest 4.1.10, electron-builder 26.15.3, and PostCSS 8.5.21.
+- Phase B planned: migrate Electron 33.4.11 to a supported secure major in isolation, with renderer, IPC, database, installer, and live Windows acceptance testing.
+- This candidate is not released and must not be described as merged until reviewed.
+
 ## v0.5.0 — AI Listing Assistant
 
 - Implemented provider-neutral offline assistance, review UX, AI history, prompt policy, and safe batch analysis.

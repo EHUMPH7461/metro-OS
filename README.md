@@ -1,5 +1,7 @@
 # Metro Command Center
 
+The `feature/security-maintenance-v0.5.1` branch is a reviewed maintenance candidate for the v0.5 development line. It updates Vitest, electron-builder, and PostCSS without changing application features or schema version 6. See [v0.5.1 dependency maintenance](docs/DEPENDENCY_MAINTENANCE_V0_5_1.md). It is not a release.
+
 v0.5.0 development adds a provider-neutral, offline-capable AI Listing Assistant with review-first field suggestions, prompt-injection defenses, transparent pricing estimates, history, and safe batch analysis. See [AI Listing Assistant](docs/V0_5_AI_LISTING_ASSISTANT.md).
 
 Sprint 4.1 adds an interactive Action Center with Inventory Health scoring, prioritized repair queues, reusable workflow filters, transparent impact estimates, and item-level CSV reporting. See [Sprint 4.1 Action Center](docs/SPRINT4_1_ACTION_CENTER.md).

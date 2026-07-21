@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1-maintenance-candidate
+
+- Updated Vitest from 2.1.9 to 4.1.10 and removed its vulnerable nested Vite/esbuild toolchain.
+- Updated electron-builder from 25.1.8 to 26.15.3, resolving the vulnerable packaging chain and critical tar exposure.
+- Updated PostCSS from 8.5.19 to 8.5.21 without changing Tailwind or Vite.
+- Preserved application behavior, packaging identity, database schema version 6, offline AI behavior, and all 62 tests.
+- Retained the known Electron 33.4.11 runtime advisory for a separately tested Phase B upgrade.
+
 ## 0.5.0-development
 
 - Added secure provider-neutral AI IPC and deterministic offline generation.

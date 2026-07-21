@@ -13,17 +13,15 @@ jobs:
       - name: Install dependencies
         shell: pwsh
         run: |
+          $npmCache = npm config get cache
           npm ci --no-audit --no-fund
           if ($LASTEXITCODE -ne 0) {
-            $npmCache = npm config get cache
             $debugLog = Get-ChildItem -Path "$npmCache\_logs\*-debug-0.log" |
               Sort-Object LastWriteTime -Descending |
               Select-Object -First 1
             if ($debugLog) {
               Get-Content -Path $debugLog.FullName
             }
-            Write-Warning 'npm failed internally; retrying npm ci once with the warmed cache.'
-            npm ci --no-audit --no-fund
           }
           exit $LASTEXITCODE
       - run: npm run typecheck

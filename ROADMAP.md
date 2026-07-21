@@ -1,5 +1,10 @@
 # Metro Command Center Roadmap
 
+## Sprint 4 - Analytics Dashboard
+
+- Business analytics, pipeline, productivity, aging, category/brand performance, storage counts, data quality, filters, and CSV export.
+- Development version: `0.4.0-development`.
+
 ## Sprint 1 - Completed
 
 Dashboard KPIs, inventory expansion, search, filtering, inline editing, unique SKU generation, profit calculations, and storage tracking are complete.

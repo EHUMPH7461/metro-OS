@@ -1,5 +1,9 @@
 # Metro Command Center User Guide
 
+## Business Analytics
+
+Open **Analytics** from the sidebar. Date, status, category, brand, storage, and readiness filters update every section. Reset Filters restores the all-time view. Revenue displays **Incomplete** until sold records have real sale prices. CSV actions open a save dialog.
+
 ## Dashboard and inventory
 
 Use the dashboard for stock, listing, sales, cost, value, and estimated-profit summaries. In Inventory Workspace, search by item, SKU, storage location, supplier, or eBay ID; filter by status; select a column heading to sort; and use the row action to edit inline.

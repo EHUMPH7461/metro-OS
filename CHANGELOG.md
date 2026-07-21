@@ -4,6 +4,11 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+### Added
+
+- Sprint 4 analytics for inventory, pipeline, productivity, aging, category, brand, storage, sales, and data quality.
+- Session-scoped filters, secure CSV export, schema version 5, and dashboard business snapshot.
+
 ## [0.3.0-rc.1] - 2026-07-20
 
 ### Added

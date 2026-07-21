@@ -1,5 +1,7 @@
 # Metro Command Center
 
+Sprint 4 development adds Business Analytics, session filters, transparent incomplete-data states, and secure CSV exports. See [Sprint 4 Analytics](docs/SPRINT4_ANALYTICS.md).
+
 Metro Command Center is the Windows desktop operations workspace for Metro Refined Racks. Version `0.3.0-rc.1` combines inventory and profit tracking with the Sprint 2 Photo Manager and Sprint 3 Listing Workspace.
 
 ## Release candidate features

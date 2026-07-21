@@ -14,5 +14,6 @@ contextBridge.exposeInMainWorld('metro', {
     setPrimary: (inventoryId: number, photoId: number) => ipcRenderer.invoke('photos:set-primary', inventoryId, photoId),
     delete: (inventoryId: number, photoId: number) => ipcRenderer.invoke('photos:delete', inventoryId, photoId)
   },
-  listings:{queue:()=>ipcRenderer.invoke('listings:queue'),save:(inventoryId:number,input:unknown)=>ipcRenderer.invoke('listings:save',inventoryId,input)}
+  listings:{queue:()=>ipcRenderer.invoke('listings:queue'),save:(inventoryId:number,input:unknown)=>ipcRenderer.invoke('listings:save',inventoryId,input)},
+  analytics:{snapshot:()=>ipcRenderer.invoke('analytics:snapshot'),exportCsv:(kind:string,csv:string)=>ipcRenderer.invoke('analytics:export-csv',kind,csv)}
 });

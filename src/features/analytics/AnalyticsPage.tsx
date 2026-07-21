@@ -28,7 +28,7 @@ export function AnalyticsPage(){
  if(loading)return <div className="analytics-state"><RefreshCw className="spin"/>Loading analytics…</div>;
  if(error)return <div className="analytics-state error"><AlertTriangle/>{error}</div>;
  return <section className="analytics-page">
-  <header><div><p className="eyebrow">SPRINT 4.1</p><h1>Business Analytics</h1><p>Operational insight from persisted inventory, listings, photos, storage, and sales.</p></div><span className="version-pill">v0.4.1-development</span></header>
+  <header><div><p className="eyebrow">METRO COMMAND CENTER</p><h1>Business Analytics</h1><p>Operational insight from persisted inventory, listings, photos, storage, and sales.</p></div><span className="version-pill">v0.5.0-rc.1</span></header>
   <section className="analytics-filters" aria-label="Analytics filters">
    <label>Date<select value={filters.datePreset} onChange={e=>setFilters({...filters,datePreset:e.target.value as AnalyticsFilters['datePreset']})}><option value="today">Today</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option><option value="month">This month</option><option value="year">This year</option><option value="all">All time</option></select></label>
    <label>Status<select value={filters.status} onChange={e=>setFilters({...filters,status:e.target.value})}>{['All','Draft','Active','Sold','Archived'].map(v=><option key={v}>{v}</option>)}</select></label>

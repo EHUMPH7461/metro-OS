@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-development
+
+- Added secure provider-neutral AI IPC and deterministic offline generation.
+- Added schema v6 AI sessions and feedback history without changing inventory or photo paths.
+- Added ten user-triggered listing-assistance tasks, review controls, settings, stale detection, and safe batch analysis.
+- Added versioned prompts, injection resistance, output policy checks, and 18 new automated tests.
+
 ## 0.4.1-development
 
 - Made all nine Action Center checks accessible workflow links.

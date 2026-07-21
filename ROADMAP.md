@@ -1,5 +1,10 @@
 # Metro Command Center Roadmap
 
+## v0.5.0 — AI Listing Assistant
+
+- Implemented provider-neutral offline assistance, review UX, AI history, prompt policy, and safe batch analysis.
+- Deferred production provider activation, external image analysis, live marketplace research, and direct eBay publishing.
+
 ## Sprint 4.1 — Action Center
 
 - Completed: interactive issue cards, health score, severity, priority, filtered queues, session workflow state, and action-report export.

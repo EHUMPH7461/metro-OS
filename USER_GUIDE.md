@@ -1,5 +1,11 @@
 # Metro Command Center User Guide
 
+## AI Listing Assistant
+
+Open **AI Assistant** from the sidebar or Listing Workspace. Select an item and explicitly choose a generation task. Review the AI-generated label, provider/model, evidence, source fields, warnings, and candidate text. Use Accept, Edit, or Reject; no field is silently applied. The complete-draft task still returns separate candidates for field-by-field review.
+
+Settings allow offline/provider selection, model, timeout, tone, title count, connection testing, and AI-history deletion. External image analysis remains disabled. The batch queue runs missing-information checks one item at a time and never accepts results automatically.
+
 ## Fixing issues from Analytics
 
 Open **Analytics**, scroll to **Data Quality & Action Center**, and select an issue card. Nonzero cards say **Fix now**; completed checks remain explicitly reviewable. Metro opens the relevant workspace with affected records visible. Use **Back to Analytics** to return or **Clear filter** to resume the full queue. Cards can be sorted by Priority, Category, or Count.

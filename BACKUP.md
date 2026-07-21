@@ -1,5 +1,7 @@
 # Backup and Restore
 
+Schema v6 stores AI generation and feedback history in the existing metro-os.sqlite file, so normal database backups include it automatically. Managed photos remain separate and unchanged. Clearing AI history does not remove inventory, listings, or photos.
+
 Metro Command Center stores the database and managed photos under Electron's per-user `userData` directory, not beside the installed executable. On Windows this is normally beneath `%APPDATA%` in the folder assigned to Metro Command Center.
 
 ## Back up

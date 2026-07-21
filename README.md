@@ -1,5 +1,7 @@
 # Metro Command Center
 
+v0.5.0 development adds a provider-neutral, offline-capable AI Listing Assistant with review-first field suggestions, prompt-injection defenses, transparent pricing estimates, history, and safe batch analysis. See [AI Listing Assistant](docs/V0_5_AI_LISTING_ASSISTANT.md).
+
 Sprint 4.1 adds an interactive Action Center with Inventory Health scoring, prioritized repair queues, reusable workflow filters, transparent impact estimates, and item-level CSV reporting. See [Sprint 4.1 Action Center](docs/SPRINT4_1_ACTION_CENTER.md).
 
 Sprint 4 development adds Business Analytics, session filters, transparent incomplete-data states, and secure CSV exports. See [Sprint 4 Analytics](docs/SPRINT4_ANALYTICS.md).

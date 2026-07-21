@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1-development
+
+- Made all nine Action Center checks accessible workflow links.
+- Added weighted Inventory Health, severity labels, priority sorting, and qualified impact estimates.
+- Added built-in Inventory and Listing Workspace queues with return-to-Analytics navigation.
+- Expanded secure CSV export to item-level action-report rows.
+
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) conventions.
 
 ## [Unreleased]

@@ -1,5 +1,7 @@
 # Metro Command Center
 
+Sprint 4.1 adds an interactive Action Center with Inventory Health scoring, prioritized repair queues, reusable workflow filters, transparent impact estimates, and item-level CSV reporting. See [Sprint 4.1 Action Center](docs/SPRINT4_1_ACTION_CENTER.md).
+
 Sprint 4 development adds Business Analytics, session filters, transparent incomplete-data states, and secure CSV exports. See [Sprint 4 Analytics](docs/SPRINT4_ANALYTICS.md).
 
 Metro Command Center is the Windows desktop operations workspace for Metro Refined Racks. Version `0.3.0-rc.1` combines inventory and profit tracking with the Sprint 2 Photo Manager and Sprint 3 Listing Workspace.

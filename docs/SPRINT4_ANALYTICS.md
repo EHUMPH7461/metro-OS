@@ -1,5 +1,7 @@
 # Sprint 4 Analytics
 
+Sprint 4.1 extends Analytics with clickable Action Center cards, weighted Inventory Health, saved repair queues, deterministic priority sorting, transparent impact estimates, and item-level CSV export. See [SPRINT4_1_ACTION_CENTER.md](SPRINT4_1_ACTION_CENTER.md).
+
 The Analytics workspace derives operational metrics from persisted Metro Command Center records. Browser-only sample records are development fixtures; packaged production views query the database through typed Electron IPC and never fabricate sales.
 
 ## Definitions

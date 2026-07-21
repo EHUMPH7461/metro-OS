@@ -1,5 +1,11 @@
 # Metro Command Center User Guide
 
+## Fixing issues from Analytics
+
+Open **Analytics**, scroll to **Data Quality & Action Center**, and select an issue card. Nonzero cards say **Fix now**; completed checks remain explicitly reviewable. Metro opens the relevant workspace with affected records visible. Use **Back to Analytics** to return or **Clear filter** to resume the full queue. Cards can be sorted by Priority, Category, or Count.
+
+**Export action report** saves the currently filtered item-level issues through the system save dialog.
+
 ## Business Analytics
 
 Open **Analytics** from the sidebar. Date, status, category, brand, storage, and readiness filters update every section. Reset Filters restores the all-time view. Revenue displays **Incomplete** until sold records have real sale prices. CSV actions open a save dialog.

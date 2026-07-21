@@ -1,5 +1,10 @@
 # Metro Command Center Roadmap
 
+## Sprint 4.1 — Action Center
+
+- Completed: interactive issue cards, health score, severity, priority, filtered queues, session workflow state, and action-report export.
+- Deferred: transactional bulk storage/category/brand editing until a dedicated batch-edit architecture is designed.
+
 ## Sprint 4 - Analytics Dashboard
 
 - Business analytics, pipeline, productivity, aging, category/brand performance, storage counts, data quality, filters, and CSV export.

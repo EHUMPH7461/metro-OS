@@ -1,41 +1,28 @@
 # Changelog
 
-## [Unreleased]
-
-### Added
-
-- Sprint 3 Listing Workspace with searchable readiness queue, filters, preparation checklist, listing fields, photo context, and workflow statuses.
-- Version 4 backward-compatible listing migration and validated listing IPC contracts.
-
-- Local Photo Manager with multi-file import, drag and drop, previews, ordering, primary-photo selection, and removal.
-- Version 3 sql.js photo metadata migration and managed Electron user-data storage.
-- Secure, validated photo IPC APIs and browser-generated thumbnails without native dependencies.
-
-All notable changes to Metro Command Center are documented here following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) conventions.
 
 ## [Unreleased]
 
+## [0.3.0-rc.1] - 2026-07-20
+
 ### Added
 
-- Sprint 1.5 runtime validation for every privileged inventory IPC input.
-- Serializable validation, conflict, missing-record, persistence, and unexpected error responses.
-- Dismissible renderer error banner with retry support and edit-draft preservation.
-- Explicit sql.js schema versions and ordered migration tests.
-- Recovery-tested temporary-file and backup database persistence.
-- Restrictive packaged and development-aware Content Security Policy.
+- Sprint 2 Photo Manager with local multi-file import, previews, ordering, primary-photo selection, removal, browser-generated thumbnails, and validated IPC.
+- Sprint 3 Listing Workspace with searchable readiness queue, missing-requirement filters, listing preparation fields, photo context, validation, and workflow statuses.
+- Version 3 photo metadata and version 4 listing migrations that preserve existing inventory and photo records.
+- Windows NSIS installer and portable release-candidate packaging.
+- Installation, user, backup, and release documentation.
 
 ### Changed
 
-- Split the Sprint 1 renderer into common components, dashboard and inventory features, domain logic, services, and types without redesigning the UI.
-- Consolidated renderer and Electron inventory contracts in dependency-free `shared/inventory.ts`.
-
-## Sprint 1
-
-- Added seven dashboard KPIs, Recent Activity, Quick Actions, expanded inventory fields, search, status filtering, sortable columns, inline editing, SKU generation, profit/ROI calculations, and storage tracking.
+- Product identity updated to Metro Command Center `0.3.0-rc.1` for Metro Refined Racks.
+- Installer shortcuts use the Metro Command Center product name and preserve per-user data during uninstall and upgrade.
 
 ## [0.1.2] - Preserved stable working version
 
 - Preserved the Windows-launchable Electron, React, TypeScript, Vite, and sql.js application on `stable-working-v0.1.2`.
 
-[Unreleased]: https://github.com/EHUMPH7461/metro-OS/compare/stable-working-v0.1.2...HEAD
+[Unreleased]: https://github.com/EHUMPH7461/metro-OS/compare/v0.3.0-rc.1...HEAD
+[0.3.0-rc.1]: https://github.com/EHUMPH7461/metro-OS/compare/stable-working-v0.1.2...release/v0.3.0-rc1
 [0.1.2]: https://github.com/EHUMPH7461/metro-OS/tree/stable-working-v0.1.2

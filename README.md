@@ -1,43 +1,39 @@
-# Metro OS Sprint 1.2
+# Metro Command Center
 
-Windows desktop command center for Metro Refined Racks.
+Metro Command Center is the Windows desktop operations workspace for Metro Refined Racks. Version `0.3.0-rc.1` combines inventory and profit tracking with the Sprint 2 Photo Manager and Sprint 3 Listing Workspace.
 
-## What changed
+## Release candidate features
 
-Sprint 1.2 uses `sql.js` for local inventory storage. This avoids the native Node/Electron ABI mismatch that prevented the original Sprint 1 package from launching on Windows.
+- Dashboard KPIs, recent activity, quick actions, search, filters, and inline inventory editing.
+- Local Photo Manager with multi-file import, previews, ordering, primary-photo selection, and managed offline storage.
+- Listing Workspace with a searchable readiness queue, preparation fields, validation warnings, photo context, and Ready to List status.
+- Automatic, backward-compatible database migrations and recoverable database writes.
+- No native Node dependencies; local persistence uses `sql.js`.
 
-## Requirements
+![Metro Command Center dashboard](docs/screenshots/v0.3.0/dashboard.png)
 
-- Windows 10 or 11
-- Node.js 22 LTS
+## Install or run
 
-## Start Metro OS
+For a testing installation, follow [INSTALL.md](INSTALL.md). For daily workflows, see [USER_GUIDE.md](USER_GUIDE.md). Backup and restore instructions are in [BACKUP.md](BACKUP.md).
 
-Open Command Prompt in this folder and run:
+Developers need Node.js 22 LTS:
 
 ```cmd
 npm install
 npm run dev
 ```
 
-The first command downloads the project dependencies. The second command builds the Electron process, starts Vite, and opens the Metro OS desktop window.
-
-## Verification
+Validation and Windows packaging:
 
 ```cmd
 npm run typecheck
 npm test
 npm run build
+npm run dist:win
 ```
 
-Inventory is stored locally in the Metro OS application data folder as `metro-os.sqlite`.
+Application data is stored in Electron's per-user application-data directory, outside the installation directory. Installing an update does not remove that data.
 
-## Sprint 2 Photo Manager
+## Release status
 
-Open **Photo Manager** from the sidebar to import, preview, order, and choose a primary product photo for any inventory record. Photos remain local and work offline. See [Photo Manager documentation](docs/PHOTO_MANAGER.md) for storage, backup, and security details.
-
-## Stable Working Version
-
-1. Install Node.js 22 LTS.
-2. Run `npm install`.
-3. Double-click `START_METRO_OS.bat`.
+This is RC1 for testing, not the final `v0.3.0` release. See [RELEASE_NOTES_v0.3.0.md](RELEASE_NOTES_v0.3.0.md) for limitations and the Windows smoke-test checklist.

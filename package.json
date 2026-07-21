@@ -1,7 +1,8 @@
 {
   "name": "metro-os",
-  "version": "0.1.2",
+  "version": "0.3.0-rc.1",
   "private": true,
+  "author": "Metro Refined Racks",
   "description": "Desktop operations system for Metro Refined Racks",
   "main": "dist-electron/electron/main.js",
   "type": "module",
@@ -12,6 +13,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "preview": "vite preview",
+    "dist:win": "npm run dist:win:installer && npm run dist:win:portable",
+    "dist:win:installer": "npm run build && electron-builder --win nsis --publish never",
+    "dist:win:portable": "npm run build && electron-builder --win portable --publish never --config.win.artifactName=MetroCommandCenter-${version}-Portable.${ext}",
+    "pack:win": "npm run build && electron-builder --win dir --publish never",
     "verify": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
@@ -30,11 +35,41 @@
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
     "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
     "vitest": "^2.1.8",
     "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.metrorefinedracks.metrocommandcenter",
+    "productName": "Metro Command Center",
+    "copyright": "Copyright © 2026 Metro Refined Racks",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "node_modules/sql.js/**/*",
+      "package.json"
+    ],
+    "win": {
+      "executableName": "MetroCommandCenter",
+      "signAndEditExecutable": false,
+      "target": ["nsis", "portable"],
+      "artifactName": "MetroCommandCenter-${version}-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Metro Command Center",
+      "deleteAppDataOnUninstall": false
+    }
   }
 }

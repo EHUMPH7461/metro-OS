@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.2-electron-maintenance-candidate
+
+- Upgraded the packaged Electron runtime from 33.4.11 to 43.2.0.
+- Resolved the remaining Electron runtime audit entry; final `npm audit` reports zero vulnerabilities.
+- Preserved schema version 6, existing inventory, photos, listings, AI history, user-data paths, security settings, and packaging identity.
+- Validated all 62 tests, renderer and Electron builds, NSIS installer, portable artifact, unpacked build, browser workspaces, and automated packaged launches.
+
 ## 0.5.1-maintenance-candidate
 
 - Updated Vitest from 2.1.9 to 4.1.10 and removed its vulnerable nested Vite/esbuild toolchain.

@@ -1,5 +1,11 @@
 # Metro Command Center Roadmap
 
+## v0.5.2 — Electron runtime maintenance candidate
+
+- Phase B complete on its review branch: Electron 43.2.0, zero current npm audit findings, schema 6 preservation, and validated Windows artifacts.
+- Remaining release gate: human interactive Windows installer-upgrade acceptance.
+- This candidate is not released or merged.
+
 ## v0.5.1 — Dependency maintenance candidate
 
 - Phase A complete on its review branch: Vitest 4.1.10, electron-builder 26.15.3, and PostCSS 8.5.21.

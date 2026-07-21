@@ -1,0 +1,29 @@
+# Metro Command Center User Guide
+
+## Dashboard and inventory
+
+Use the dashboard for stock, listing, sales, cost, value, and estimated-profit summaries. In Inventory Workspace, search by item, SKU, storage location, supplier, or eBay ID; filter by status; select a column heading to sort; and use the row action to edit inline.
+
+## Photo Manager
+
+1. Add or select an inventory item.
+2. Open **Photo Manager** in the sidebar.
+3. Drop JPEG, PNG, or WebP files onto the import area, or choose files. Each file can be up to 20 MB.
+4. Preview images, move them in listing order, and select a primary photo.
+5. Remove unwanted images with the trash action.
+
+Imported files are copied into managed per-user storage. The original source files can move without breaking Metro Command Center references.
+
+## Listing Workspace
+
+1. Open **Listing Workspace**.
+2. Search the queue or filter it by missing requirement.
+3. Select an item and complete its title, description, item specifics, price, shipping, and return fields.
+4. Review the readiness percentage and validation warnings.
+5. Save changes. Mark **Ready to List** only after every required check reaches 100%.
+
+The queue filters include missing photos, primary photo, title, description, item specifics, pricing, shipping, Ready to list, and Listed.
+
+## Workflow
+
+`Inventory → Photos → Listing Workspace → Ready to List`

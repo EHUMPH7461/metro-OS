@@ -1,72 +1,32 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BarChart3, Boxes, DollarSign, Home, ListChecks, PackagePlus, Search, ShoppingCart, Sparkles, Trash2 } from 'lucide-react';
-import type { InventoryInput, InventoryItem } from './types/inventory';
+import { PackagePlus } from 'lucide-react';
+import type { InventoryInput, InventoryItem } from '../shared/inventory';
+import { AppShell, type AppView } from './components/common/AppShell';
+import { ErrorBanner } from './components/common/ErrorBanner';
+import { DashboardPage } from './features/dashboard/DashboardPage';
+import { InventoryPage } from './features/inventory/InventoryPage';
+import { InventoryModal } from './features/inventory/InventoryModal';
+import { calculateItemFinancials } from './domain/inventory';
+import { inventoryService, readableError } from './services/inventoryService';
+import { PhotoManager } from './features/photos/PhotoManager';
+import { ListingWorkspace } from './features/listings/ListingWorkspace';
 
-const seed: InventoryItem[] = [
-  { id: 1, sku: 'MRR-1001', title: "Levi's 501 Straight Leg Jeans", category: 'Jeans', brand: "Levi's", size: '36x32', quantity: 1, cost: 12, listPrice: 39.99, status: 'Active', createdAt: new Date().toISOString() },
-  { id: 2, sku: 'MRR-1002', title: 'Nike Air Max Running Shoes', category: 'Shoes', brand: 'Nike', size: '11', quantity: 1, cost: 18, listPrice: 64.99, status: 'Draft', createdAt: new Date().toISOString() }
+const today=()=>new Date().toISOString().slice(0,10);
+const blank=():InventoryInput=>({sku:'',title:'',brand:'',category:'',gender:'',size:'',color:'',condition:'',purchasePrice:0,listPrice:0,shippingCost:0,ebayFees:0,quantity:1,bin:'',rack:'',shelf:'',drawer:'',supplier:'',purchaseDate:today(),listingDate:'',soldDate:'',ebayItemId:'',status:'Draft',notes:''});
+const editableInput=({id:_id,profit:_profit,roi:_roi,createdAt:_createdAt,updatedAt:_updatedAt,...input}:InventoryItem):InventoryInput=>input;
+const fallback:InventoryItem[]=[
+ {...blank(),id:1,sku:'MRR-2026-000001',title:"Levi's 501 Straight Leg Jeans",brand:"Levi's",category:'Jeans',size:'36x32',color:'Indigo',condition:'Excellent',purchasePrice:12,listPrice:39.99,shippingCost:7,ebayFees:5.2,profit:15.79,roi:131.58,quantity:1,bin:'B-12',rack:'R1',status:'Active',photoCount:3,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()},
+ {...blank(),id:2,sku:'MRR-2026-000002',title:'Nike Air Max Running Shoes',brand:'Nike',category:'Shoes',size:'11',color:'White / Navy',condition:'Very Good',purchasePrice:18,listPrice:64.99,shippingCost:9,ebayFees:8.4,profit:29.59,roi:164.39,quantity:1,shelf:'S2',status:'Draft',photoCount:0,createdAt:new Date().toISOString(),updatedAt:new Date(Date.now()-86400000).toISOString()},
+ {...blank(),id:3,sku:'MRR-2026-000003',title:'Vintage Wool Blend Overcoat',brand:'Pendleton',category:'Coats',size:'L',color:'Camel',condition:'Excellent',purchasePrice:24,listPrice:119.99,shippingCost:14,ebayFees:15.6,profit:66.39,roi:276.63,quantity:1,rack:'R3',status:'Draft',photoCount:2,createdAt:new Date().toISOString(),updatedAt:new Date(Date.now()-172800000).toISOString()}
 ];
+type SortKey=keyof InventoryItem;
 
-const blank: InventoryInput = { sku: '', title: '', category: 'Jeans', brand: '', size: '', quantity: 1, cost: 0, listPrice: 0, status: 'Draft' };
-
-export default function App() {
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [query, setQuery] = useState('');
-  const [form, setForm] = useState<InventoryInput>(blank);
-  const [showForm, setShowForm] = useState(false);
-
-  const refresh = async () => {
-    const rows = window.metro ? await window.metro.inventory.list() : seed;
-    setItems(rows);
-  };
-  useEffect(() => { void refresh(); }, []);
-
-  const filtered = useMemo(() => items.filter((item) =>
-    [item.sku, item.title, item.brand, item.category].join(' ').toLowerCase().includes(query.toLowerCase())), [items, query]);
-
-  const value = items.reduce((sum, item) => sum + item.listPrice * item.quantity, 0);
-  const profit = items.reduce((sum, item) => sum + (item.listPrice - item.cost) * item.quantity, 0);
-
-  const save = async () => {
-    if (!form.sku.trim() || !form.title.trim()) return;
-    if (window.metro) await window.metro.inventory.create(form);
-    else setItems((current) => [{ ...form, id: Date.now(), createdAt: new Date().toISOString() }, ...current]);
-    setForm(blank); setShowForm(false); await refresh();
-  };
-
-  const remove = async (id: number) => {
-    if (window.metro) await window.metro.inventory.delete(id);
-    setItems((current) => current.filter((item) => item.id !== id));
-  };
-
-  return <div className="app-shell">
-    <aside className="sidebar">
-      <div className="brand"><div className="brand-mark">M</div><div><strong>Metro OS</strong><span>Refined Racks</span></div></div>
-      <nav>
-        <a className="active"><Home size={18}/>Dashboard</a><a><Boxes size={18}/>Inventory</a><a><ListChecks size={18}/>Listings</a>
-        <a><ShoppingCart size={18}/>Orders</a><a><DollarSign size={18}/>Financials</a><a><BarChart3 size={18}/>Reports</a><a><Sparkles size={18}/>AI Assistant</a>
-      </nav>
-      <div className="sidebar-foot">Sprint 1 · Desktop Foundation</div>
-    </aside>
-    <main>
-      <header><div><p className="eyebrow">METRO REFINED RACKS</p><h1>Business Dashboard</h1><p>Manage inventory, listings, and profit from one workspace.</p></div>
-        <button className="primary" onClick={() => setShowForm(true)}><PackagePlus size={18}/>Add Inventory</button></header>
-      <section className="stats">
-        <article><span>Total Units</span><strong>{items.reduce((s,i)=>s+i.quantity,0)}</strong><small>Across {items.length} SKUs</small></article>
-        <article><span>Inventory Value</span><strong>${value.toFixed(2)}</strong><small>Current listing value</small></article>
-        <article><span>Potential Profit</span><strong>${profit.toFixed(2)}</strong><small>Before fees and shipping</small></article>
-        <article><span>Active Listings</span><strong>{items.filter(i=>i.status==='Active').length}</strong><small>Ready for buyers</small></article>
-      </section>
-      <section className="panel">
-        <div className="panel-head"><div><h2>Inventory</h2><p>Track every item from sourcing to sale.</p></div><label className="search"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search SKU, title, or brand"/></label></div>
-        <div className="table-wrap"><table><thead><tr><th>SKU</th><th>Item</th><th>Category</th><th>Size</th><th>Qty</th><th>Cost</th><th>List Price</th><th>Status</th><th></th></tr></thead>
-          <tbody>{filtered.map(item=><tr key={item.id}><td className="mono">{item.sku}</td><td><b>{item.title}</b><span>{item.brand}</span></td><td>{item.category}</td><td>{item.size}</td><td>{item.quantity}</td><td>${item.cost.toFixed(2)}</td><td>${item.listPrice.toFixed(2)}</td><td><em className={item.status.toLowerCase()}>{item.status}</em></td><td><button className="icon" onClick={()=>void remove(item.id)} aria-label="Delete"><Trash2 size={16}/></button></td></tr>)}</tbody></table></div>
-      </section>
-    </main>
-    {showForm && <div className="modal-backdrop"><div className="modal"><div><h2>Add inventory item</h2><p>Create a new SKU for Metro Refined Racks.</p></div>
-      <div className="form-grid">{(['sku','title','brand','category','size'] as const).map(key=><label key={key}>{key}<input value={String(form[key])} onChange={e=>setForm({...form,[key]:e.target.value})}/></label>)}
-      {(['quantity','cost','listPrice'] as const).map(key=><label key={key}>{key}<input type="number" value={form[key]} onChange={e=>setForm({...form,[key]:Number(e.target.value)})}/></label>)}
-      <label>Status<select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option>Draft</option><option>Active</option><option>Sold</option></select></label></div>
-      <div className="modal-actions"><button onClick={()=>setShowForm(false)}>Cancel</button><button className="primary" onClick={()=>void save()}>Save Item</button></div></div></div>}
-  </div>;
-}
+export default function App(){const[items,setItems]=useState<InventoryItem[]>([]);const[view,setView]=useState<AppView>('dashboard');const[query,setQuery]=useState('');const[status,setStatus]=useState('All');const[form,setForm]=useState<InventoryInput>(blank());const[showForm,setShowForm]=useState(false);const[editing,setEditing]=useState<InventoryItem|null>(null);const[error,setError]=useState('');const[saving,setSaving]=useState(false);const[sort,setSort]=useState<{key:SortKey;direction:1|-1}>({key:'updatedAt',direction:-1});
+const refresh=async()=>{try{setItems(window.metro?await inventoryService.list():fallback);setError('');}catch(e){setError(readableError(e));}};useEffect(()=>{void refresh();},[]);
+const filtered=useMemo(()=>{const needle=query.trim().toLowerCase();return items.filter(item=>{const text=[item.sku,item.title,item.brand,item.category,item.color,item.condition,item.bin,item.rack,item.shelf,item.drawer,item.supplier,item.ebayItemId,item.notes].join(' ').toLowerCase();return(!needle||text.includes(needle))&&(status==='All'||item.status===status);}).sort((a,b)=>String(a[sort.key]??'').localeCompare(String(b[sort.key]??''),undefined,{numeric:true})*sort.direction);},[items,query,status,sort]);
+const changeSort=(key:SortKey)=>setSort(current=>({key,direction:current.key===key?(current.direction===1?-1:1):1}));
+const save=async()=>{if(!form.title.trim())return;setSaving(true);try{if(window.metro)await inventoryService.create(form);else{const f=calculateItemFinancials(form);setItems(current=>[{...form,id:Date.now(),sku:`MRR-${new Date().getFullYear()}-${String(current.length+1).padStart(6,'0')}`,profit:f.netProfit,roi:f.roi,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()},...current]);}setForm(blank());setShowForm(false);if(window.metro)await refresh();setError('');}catch(e){setError(readableError(e));}finally{setSaving(false);}};
+const saveEdit=async()=>{if(!editing)return;try{if(window.metro)await inventoryService.update(editing.id,editableInput(editing));else{const f=calculateItemFinancials(editing);setItems(current=>current.map(i=>i.id===editing.id?{...editing,profit:f.netProfit,roi:f.roi,updatedAt:new Date().toISOString()}:i));}if(window.metro)await refresh();setEditing(null);setError('');}catch(e){setError(readableError(e));}};
+const remove=async(id:number)=>{try{if(window.metro)await inventoryService.delete(id);setItems(current=>current.filter(i=>i.id!==id));setError('');}catch(e){setError(readableError(e));}};
+if(view==='listings')return <AppShell view={view} onView={setView}><ListingWorkspace/></AppShell>;
+return <AppShell view={view} onView={setView}>{view==='photos'?<PhotoManager items={items} onInventoryChanged={refresh}/>:<><header><div><p className="eyebrow">METRO REFINED RACKS</p><h1>Command Center</h1><p>Inventory health, activity, and profit at a glance.</p></div><div className="header-actions"><button className="secondary" onClick={()=>setView('photos')}>Manage Photos</button><button className="primary" onClick={()=>setShowForm(true)}><PackagePlus size={18}/>Add Inventory</button></div></header>{error&&<ErrorBanner message={error} onDismiss={()=>setError('')} onRetry={()=>void refresh()}/>}<DashboardPage items={items} onAdd={()=>setShowForm(true)} onStatus={setStatus} onAll={()=>{setStatus('All');setQuery('');}}/><InventoryPage items={filtered} query={query} status={status} editing={editing} sort={sort} onQuery={setQuery} onStatus={setStatus} onSort={changeSort} onEdit={item=>setEditing({...item})} onCancel={()=>setEditing(null)} onSave={()=>void saveEdit()} onDelete={id=>void remove(id)} onChange={setEditing}/>{showForm&&<InventoryModal form={form} onChange={setForm} onClose={()=>setShowForm(false)} onSave={()=>void save()} saving={saving}/>}</>}</AppShell>;}

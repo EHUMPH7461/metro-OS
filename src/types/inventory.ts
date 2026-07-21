@@ -1,28 +1,18 @@
-export type InventoryItem = {
-  id: number;
-  sku: string;
-  title: string;
-  category: string;
-  brand: string;
-  size: string;
-  quantity: number;
-  cost: number;
-  listPrice: number;
-  status: string;
-  createdAt: string;
-};
-
-export type InventoryInput = Omit<InventoryItem, 'id' | 'createdAt'>;
+export type { InventoryInput, InventoryItem, InventoryStatus, IpcResult, MetroError } from '../../shared/inventory';
+export type { InventoryPhoto, PhotoImportInput, PhotoApi } from '../../shared/photos';
+import type { InventoryInput, InventoryItem, IpcResult } from '../../shared/inventory';
 
 declare global {
   interface Window {
     metro?: {
       inventory: {
-        list: () => Promise<InventoryItem[]>;
-        create: (input: InventoryInput) => Promise<InventoryItem>;
-        update: (id: number, input: InventoryInput) => Promise<InventoryItem>;
-        delete: (id: number) => Promise<boolean>;
+        list: () => Promise<IpcResult<InventoryItem[]>>;
+        create: (input: InventoryInput) => Promise<IpcResult<InventoryItem>>;
+        update: (id: number, input: InventoryInput) => Promise<IpcResult<InventoryItem>>;
+        delete: (id: number) => Promise<IpcResult<boolean>>;
       };
+      photos: import('../../shared/photos').PhotoApi;
+      listings: import('../../shared/listings').ListingApi;
     };
   }
 }

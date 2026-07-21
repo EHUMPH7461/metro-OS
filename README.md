@@ -1,39 +1,39 @@
-# Metro OS Sprint 1.1
+# Metro Command Center
 
-Windows desktop command center for Metro Refined Racks.
+Metro Command Center is the Windows desktop operations workspace for Metro Refined Racks. Version `0.3.0-rc.1` combines inventory and profit tracking with the Sprint 2 Photo Manager and Sprint 3 Listing Workspace.
 
-## What changed
+## Release candidate features
 
-Sprint 1.1 replaces the native `better-sqlite3` addon with `sql.js`. This removes the Node/Electron ABI mismatch that prevented the original Sprint 1 package from launching on Windows.
+- Dashboard KPIs, recent activity, quick actions, search, filters, and inline inventory editing.
+- Local Photo Manager with multi-file import, previews, ordering, primary-photo selection, and managed offline storage.
+- Listing Workspace with a searchable readiness queue, preparation fields, validation warnings, photo context, and Ready to List status.
+- Automatic, backward-compatible database migrations and recoverable database writes.
+- No native Node dependencies; local persistence uses `sql.js`.
 
-## Requirements
+![Metro Command Center dashboard](docs/screenshots/v0.3.0/dashboard.png)
 
-- Windows 10 or 11
-- Node.js 22 LTS
+## Install or run
 
-## Start Metro OS
+For a testing installation, follow [INSTALL.md](INSTALL.md). For daily workflows, see [USER_GUIDE.md](USER_GUIDE.md). Backup and restore instructions are in [BACKUP.md](BACKUP.md).
 
-Open Command Prompt in this folder and run:
+Developers need Node.js 22 LTS:
 
 ```cmd
 npm install
 npm run dev
 ```
 
-The first command downloads the project dependencies. The second command builds the Electron process, starts Vite, and opens the Metro OS desktop window.
-
-## Verification
+Validation and Windows packaging:
 
 ```cmd
 npm run typecheck
 npm test
 npm run build
+npm run dist:win
 ```
 
-Inventory is stored locally in the Metro OS application data folder as `metro-os.sqlite`.
+Application data is stored in Electron's per-user application-data directory, outside the installation directory. Installing an update does not remove that data.
 
-## Professional Windows releases
+## Release status
 
-Metro OS includes a Windows GitHub Actions workflow at `.github/workflows/windows-release.yml`. Run it manually from the Actions tab to create downloadable installer and portable application artifacts on a real Windows runner.
-
-For a local Windows build, double-click `BUILD_WINDOWS_APP.bat`. The script performs a clean install before compiling, preventing stale or incomplete `node_modules` folders from causing missing `tsc` errors.
+This is RC1 for testing, not the final `v0.3.0` release. See [RELEASE_NOTES_v0.3.0.md](RELEASE_NOTES_v0.3.0.md) for limitations and the Windows smoke-test checklist.

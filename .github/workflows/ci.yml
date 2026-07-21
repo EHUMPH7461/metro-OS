@@ -11,19 +11,7 @@ jobs:
         with:
           node-version: 22
       - name: Install dependencies
-        shell: pwsh
-        run: |
-          $npmCache = npm config get cache
-          npm ci --no-audit --no-fund
-          if ($LASTEXITCODE -ne 0) {
-            $debugLog = Get-ChildItem -Path "$npmCache\_logs\*-debug-0.log" |
-              Sort-Object LastWriteTime -Descending |
-              Select-Object -First 1
-            if ($debugLog) {
-              Get-Content -Path $debugLog.FullName
-            }
-          }
-          exit $LASTEXITCODE
+        run: npm ci --registry=https://registry.npmjs.org/ --replace-registry-host=always --no-audit --no-fund
       - run: npm run typecheck
       - run: npm test
       - run: npm run build

@@ -6,6 +6,7 @@ import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
 import type { InventoryInput, InventoryItem } from '../shared/inventory.js';
 import type { InventoryPhoto, PhotoImportInput } from '../shared/photos.js';
 import type { ListingChecklist,ListingInput,ListingRecord } from '../shared/listings.js';
+import type { AnalyticsRecord } from '../shared/analytics.js';
 import { MetroDomainError } from './errors.js';
 
 type InventoryRow = Record<string, unknown>;
@@ -16,7 +17,7 @@ type PersistenceFiles = {
   rmSync(path: string, options: { force: boolean }): void;
 };
 const require = createRequire(import.meta.url);
-export const INVENTORY_SCHEMA_VERSION = 4;
+export const INVENTORY_SCHEMA_VERSION = 5;
 let SQL: SqlJsStatic;
 let db: Database;
 let dbPath = '';
@@ -135,7 +136,9 @@ function addPhotoMetadata(database: Database) {
 function addListingWorkspace(database:Database){database.run(`CREATE TABLE IF NOT EXISTS listings(
  id INTEGER PRIMARY KEY AUTOINCREMENT,inventory_id INTEGER NOT NULL UNIQUE,listing_title TEXT NOT NULL DEFAULT '',description TEXT NOT NULL DEFAULT '',category TEXT NOT NULL DEFAULT '',condition TEXT NOT NULL DEFAULT '',brand TEXT NOT NULL DEFAULT '',department TEXT NOT NULL DEFAULT '',size TEXT NOT NULL DEFAULT '',color TEXT NOT NULL DEFAULT '',material TEXT NOT NULL DEFAULT '',style TEXT NOT NULL DEFAULT '',type TEXT NOT NULL DEFAULT '',model TEXT NOT NULL DEFAULT '',mpn TEXT NOT NULL DEFAULT '',upc TEXT NOT NULL DEFAULT '',country_of_manufacture TEXT NOT NULL DEFAULT '',list_price REAL NOT NULL DEFAULT 0,minimum_offer REAL NOT NULL DEFAULT 0,shipping_service TEXT NOT NULL DEFAULT '',shipping_charge REAL NOT NULL DEFAULT 0,handling_time INTEGER NOT NULL DEFAULT 0,return_policy TEXT NOT NULL DEFAULT '',ebay_item_id TEXT NOT NULL DEFAULT '',listing_url TEXT NOT NULL DEFAULT '',status TEXT NOT NULL DEFAULT 'Purchased',internal_notes TEXT NOT NULL DEFAULT '',checklist_json TEXT NOT NULL DEFAULT '{}',created_at TEXT NOT NULL,updated_at TEXT NOT NULL)`);database.run('CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status)');}
 
-const migrations = [addInventoryColumns, recalculateInventory, addPhotoMetadata,addListingWorkspace];
+function addAnalyticsFields(database:Database){const inventory=new Set((database.exec('PRAGMA table_info(inventory)')[0]?.values??[]).map(row=>String(row[1])));if(!inventory.has('sale_price'))database.run('ALTER TABLE inventory ADD COLUMN sale_price REAL');if(!inventory.has('other_selling_costs'))database.run('ALTER TABLE inventory ADD COLUMN other_selling_costs REAL');if(!inventory.has('sold_status_at'))database.run("ALTER TABLE inventory ADD COLUMN sold_status_at TEXT NOT NULL DEFAULT ''");const listings=new Set((database.exec('PRAGMA table_info(listings)')[0]?.values??[]).map(row=>String(row[1])));if(!listings.has('completed_at'))database.run("ALTER TABLE listings ADD COLUMN completed_at TEXT NOT NULL DEFAULT ''");if(inventory.has('sold_date'))database.run("UPDATE inventory SET sold_status_at=sold_date WHERE sold_status_at='' AND sold_date<>''");if(listings.has('updated_at')&&listings.has('status'))database.run("UPDATE listings SET completed_at=updated_at WHERE completed_at='' AND status IN ('Ready','Listed','Sold','Packed','Shipped','Delivered')");}
+
+const migrations = [addInventoryColumns, recalculateInventory, addPhotoMetadata,addListingWorkspace,addAnalyticsFields];
 
 export function runMigrations(database: Database) {
   const current = Number(database.exec('PRAGMA user_version')[0]?.values[0]?.[0] ?? 0);
@@ -194,6 +197,8 @@ const selectFields = `i.id, i.sku, i.title, i.brand, i.category, i.gender, i.siz
 export function listInventory() {
   return rowsFromQuery(`SELECT ${selectFields} FROM inventory i ORDER BY i.id DESC`) as unknown as InventoryItem[];
 }
+
+export function listAnalyticsRecords():AnalyticsRecord[]{return listInventory().map(item=>{const listing=getListing(item.id);const financial=rowsFromQuery('SELECT sale_price AS salePrice,other_selling_costs AS otherSellingCosts,sold_status_at AS soldStatusAt FROM inventory WHERE id=:id',{':id':item.id})[0]??{};const listingTime=rowsFromQuery('SELECT completed_at AS listingCompletedAt FROM listings WHERE inventory_id=:id',{':id':item.id})[0]??{};const photos=rowsFromQuery('SELECT created_at AS createdAt FROM inventory_photos WHERE inventory_id=:id',{':id':item.id});return{...item,...financial,...listingTime,listing,photoCreatedAt:photos.map(photo=>String(photo.createdAt??'')).filter(Boolean)} as AnalyticsRecord})}
 
 function normalized(input: InventoryInput, sku: string) {
   const financials = calculateFinancials(input);

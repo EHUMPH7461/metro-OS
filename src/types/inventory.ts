@@ -13,6 +13,8 @@ declare global {
       };
       photos: import('../../shared/photos').PhotoApi;
       listings: import('../../shared/listings').ListingApi;
+      analytics: import('../../shared/analytics').AnalyticsApi;
+      ai: import('../../shared/ai').AIApi;
     };
   }
 }

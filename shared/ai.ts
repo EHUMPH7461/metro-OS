@@ -1,0 +1,15 @@
+import type{IpcResult}from'./inventory.js';
+import type{ListingQueueItem}from'./listings.js';
+export type AITask='title'|'description'|'category'|'specifics'|'condition'|'keywords'|'pricing'|'shipping'|'missing'|'full-draft';
+export type Evidence='verified'|'inferred'|'missing'|'conflicting';
+export type AISuggestion={id:string;field:string;value:string;status:'Draft'|'Accepted'|'Rejected'|'Edited'|'Stale';evidence:Evidence;confidence:number;warnings:string[];sources:string[]};
+export type AIUsage={inputTokens?:number;outputTokens?:number;estimated?:boolean};
+export type AIRequest={inventoryId:number;task:AITask;item:ListingQueueItem;selectedPhotoIds?:number[];candidateCount?:number;tone?:string;signal?:string};
+export type AIResponse={sessionId?:number;provider:string;model:string;generatedAt:string;suggestions:AISuggestion[];missing:string[];warnings:string[];usage?:AIUsage;sourceHash:string};
+export type AIProviderCapabilities={text:boolean;images:boolean;streaming:boolean;usage:boolean};
+export type AIProviderInfo={id:string;model:string;configured:boolean;offline:boolean;capabilities:AIProviderCapabilities};
+export type AISettings={provider:string;model:string;timeoutMs:number;tone:string;template:string;titleCandidates:number;imageAnalysis:boolean};
+export type AIHistory={id:number;inventoryId:number;task:AITask;provider:string;model:string;generatedAt:string;status:string;sourceHash:string;response:AIResponse;errorSummary:string};
+export type AIErrorCode='NO_CREDENTIALS'|'TIMEOUT'|'RATE_LIMIT'|'UNAVAILABLE'|'INVALID_RESPONSE'|'CANCELLED'|'STALE';
+export type AIError={code:AIErrorCode;message:string;retryable:boolean};
+export type AIApi={info:()=>Promise<IpcResult<AIProviderInfo[]>>;generate:(request:AIRequest,settings:AISettings)=>Promise<IpcResult<AIResponse>>;history:(inventoryId:number)=>Promise<IpcResult<AIHistory[]>>;feedback:(sessionId:number,suggestionId:string,status:string,value:string)=>Promise<IpcResult<boolean>>;clearHistory:()=>Promise<IpcResult<boolean>>;test:(settings:AISettings)=>Promise<IpcResult<{ok:boolean;message:string}>>};

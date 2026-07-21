@@ -1,5 +1,38 @@
 # Metro Command Center Roadmap
 
+## v0.5.0 RC1 — Prepared for acceptance
+
+- Release branch packaging, metadata, installer upgrade, portable launch, regression testing, security audit, documentation, and screenshots are complete.
+- Final gate: human interactive Windows acceptance and explicit merge/tag approval.
+- RC1 remains unmerged and untagged.
+
+## v0.5.2 — Electron runtime maintenance candidate
+
+- Phase B complete on its review branch: Electron 43.2.0, zero current npm audit findings, schema 6 preservation, and validated Windows artifacts.
+- Remaining release gate: human interactive Windows installer-upgrade acceptance.
+- This candidate is not released or merged.
+
+## v0.5.1 — Dependency maintenance candidate
+
+- Phase A complete on its review branch: Vitest 4.1.10, electron-builder 26.15.3, and PostCSS 8.5.21.
+- Phase B planned: migrate Electron 33.4.11 to a supported secure major in isolation, with renderer, IPC, database, installer, and live Windows acceptance testing.
+- This candidate is not released and must not be described as merged until reviewed.
+
+## v0.5.0 — AI Listing Assistant
+
+- Implemented provider-neutral offline assistance, review UX, AI history, prompt policy, and safe batch analysis.
+- Deferred production provider activation, external image analysis, live marketplace research, and direct eBay publishing.
+
+## Sprint 4.1 — Action Center
+
+- Completed: interactive issue cards, health score, severity, priority, filtered queues, session workflow state, and action-report export.
+- Deferred: transactional bulk storage/category/brand editing until a dedicated batch-edit architecture is designed.
+
+## Sprint 4 - Analytics Dashboard
+
+- Business analytics, pipeline, productivity, aging, category/brand performance, storage counts, data quality, filters, and CSV export.
+- Development version: `0.4.0-development`.
+
 ## Sprint 1 - Completed
 
 Dashboard KPIs, inventory expansion, search, filtering, inline editing, unique SKU generation, profit calculations, and storage tracking are complete.

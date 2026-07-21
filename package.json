@@ -1,6 +1,6 @@
 {
   "name": "metro-os",
-  "version": "0.3.0-rc.1",
+  "version": "0.5.0-rc.1",
   "private": true,
   "author": "Metro Refined Racks",
   "description": "Desktop operations system for Metro Refined Racks",
@@ -34,13 +34,13 @@
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
-    "electron": "^33.2.1",
-    "electron-builder": "^25.1.8",
-    "postcss": "^8.4.49",
+    "electron": "43.2.0",
+    "electron-builder": "26.15.3",
+    "postcss": "8.5.21",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
-    "vitest": "^2.1.8",
+    "vitest": "4.1.10",
     "wait-on": "^8.0.1"
   },
   "build": {
@@ -59,7 +59,7 @@
     ],
     "win": {
       "executableName": "MetroCommandCenter",
-      "signAndEditExecutable": false,
+      "signExecutable": false,
       "target": ["nsis", "portable"],
       "artifactName": "MetroCommandCenter-${version}-Setup.${ext}"
     },

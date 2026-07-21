@@ -10,6 +10,8 @@ import { calculateItemFinancials } from './domain/inventory';
 import { inventoryService, readableError } from './services/inventoryService';
 import { PhotoManager } from './features/photos/PhotoManager';
 import { ListingWorkspace } from './features/listings/ListingWorkspace';
+import { AnalyticsPage } from './features/analytics/AnalyticsPage';
+import { AIListingAssistant } from './features/ai/AIListingAssistant';
 
 const today=()=>new Date().toISOString().slice(0,10);
 const blank=():InventoryInput=>({sku:'',title:'',brand:'',category:'',gender:'',size:'',color:'',condition:'',purchasePrice:0,listPrice:0,shippingCost:0,ebayFees:0,quantity:1,bin:'',rack:'',shelf:'',drawer:'',supplier:'',purchaseDate:today(),listingDate:'',soldDate:'',ebayItemId:'',status:'Draft',notes:''});
@@ -29,4 +31,6 @@ const save=async()=>{if(!form.title.trim())return;setSaving(true);try{if(window.
 const saveEdit=async()=>{if(!editing)return;try{if(window.metro)await inventoryService.update(editing.id,editableInput(editing));else{const f=calculateItemFinancials(editing);setItems(current=>current.map(i=>i.id===editing.id?{...editing,profit:f.netProfit,roi:f.roi,updatedAt:new Date().toISOString()}:i));}if(window.metro)await refresh();setEditing(null);setError('');}catch(e){setError(readableError(e));}};
 const remove=async(id:number)=>{try{if(window.metro)await inventoryService.delete(id);setItems(current=>current.filter(i=>i.id!==id));setError('');}catch(e){setError(readableError(e));}};
 if(view==='listings')return <AppShell view={view} onView={setView}><ListingWorkspace/></AppShell>;
+if(view==='analytics')return <AppShell view={view} onView={setView}><AnalyticsPage/></AppShell>;
+if(view==='ai')return <AppShell view={view} onView={setView}><AIListingAssistant/></AppShell>;
 return <AppShell view={view} onView={setView}>{view==='photos'?<PhotoManager items={items} onInventoryChanged={refresh}/>:<><header><div><p className="eyebrow">METRO REFINED RACKS</p><h1>Command Center</h1><p>Inventory health, activity, and profit at a glance.</p></div><div className="header-actions"><button className="secondary" onClick={()=>setView('photos')}>Manage Photos</button><button className="primary" onClick={()=>setShowForm(true)}><PackagePlus size={18}/>Add Inventory</button></div></header>{error&&<ErrorBanner message={error} onDismiss={()=>setError('')} onRetry={()=>void refresh()}/>}<DashboardPage items={items} onAdd={()=>setShowForm(true)} onStatus={setStatus} onAll={()=>{setStatus('All');setQuery('');}}/><InventoryPage items={filtered} query={query} status={status} editing={editing} sort={sort} onQuery={setQuery} onStatus={setStatus} onSort={changeSort} onEdit={item=>setEditing({...item})} onCancel={()=>setEditing(null)} onSave={()=>void saveEdit()} onDelete={id=>void remove(id)} onChange={setEditing}/>{showForm&&<InventoryModal form={form} onChange={setForm} onClose={()=>setShowForm(false)} onSave={()=>void save()} saving={saving}/>}</>}</AppShell>;}

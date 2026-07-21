@@ -1,5 +1,13 @@
 # Metro Command Center Architecture
 
+## v0.5 AI boundary
+
+The renderer sends typed task requests through a narrow preload bridge. Provider selection, environment credentials, retries, persistence, and external-network capability remain in the Electron main process. The provider interface is vendor-neutral. SQLite schema v6 stores generation sessions and feedback events; secrets and image binaries are excluded.
+
+## Sprint 4 analytics boundary
+
+Electron returns fixed typed analytics records; the renderer never submits SQL. Pure calculations live in `src/domain/analytics.ts`. CSV is validated in Electron and written only after a native save-dialog selection. Additive schema version 5 retains all v0.3.0 rows and photo paths.
+
 ## Active application
 
 The repository-root Electron/Vite project is the only active application. Root `package.json`, `electron/`, `shared/`, `src/`, and the root build configuration are authoritative. `apps/desktop/`, `packages/*`, and `db/schema.ts` remain inactive scaffolding and must not be imported or activated without an approved consolidation plan.

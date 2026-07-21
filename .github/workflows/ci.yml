@@ -4,14 +4,28 @@ on:
   pull_request:
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+        shell: pwsh
+        run: |
+          npm ci --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) {
+            $npmCache = npm config get cache
+            $debugLog = Get-ChildItem -Path "$npmCache\_logs\*-debug-0.log" |
+              Sort-Object LastWriteTime -Descending |
+              Select-Object -First 1
+            if ($debugLog) {
+              Get-Content -Path $debugLog.FullName
+            }
+            Write-Warning 'npm failed internally; retrying npm ci once with the warmed cache.'
+            npm ci --no-audit --no-fund
+          }
+          exit $LASTEXITCODE
       - run: npm run typecheck
       - run: npm test
       - run: npm run build

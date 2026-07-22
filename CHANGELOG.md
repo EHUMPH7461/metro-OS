@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.5.0-rc.1] - 2026-07-21
+## [0.5.0] - 2026-07-21
 
 - Prepared Windows RC1 identity and artifact naming for Metro Command Center.
 - Corrected embedded Windows Product, Company, description, and file-version metadata while keeping code signing disabled.

@@ -6,13 +6,13 @@ Status: release candidate prepared on `release/v0.5.0-rc1`; not merged or tagged
 
 - Product: Metro Command Center
 - Company: Metro Refined Racks
-- Application version: `0.5.0-rc.1`
+- Application version: `0.5.0`
 - Electron: `43.2.0`
 - Executable: `MetroCommandCenter.exe`
 - App ID: `com.metrorefinedracks.metrocommandcenter`
 - Database schema: `6`
 
-The Windows executable reports Product `Metro Command Center`, Company `Metro Refined Racks`, description `Metro Command Center`, and file version `0.5.0-rc.1`.
+The Windows executable reports Product `Metro Command Center`, Company `Metro Refined Racks`, description `Metro Command Center`, and file version `0.5.0`.
 
 ## Scope
 
@@ -55,8 +55,8 @@ No migration or database behavior change was added. User data remains in Electro
 
 | Artifact | Size | SHA-256 |
 |---|---:|---|
-| `release/MetroCommandCenter-0.5.0-rc.1-Setup.exe` | 105,257,197 bytes | `7AE5831130C3F819CD4AA402CC15D7389A5574D2199ECA2199F687AAC3C426DB` |
-| `release/MetroCommandCenter-0.5.0-rc.1-Portable.exe` | 92,286,640 bytes | `DD9230B4C45A3EE23B06D1A303ABC60EFEBD5F331DEEEECA31E2BF50A107EE2D` |
+| `release/MetroCommandCenter-0.5.0-Setup.exe` | 105,257,197 bytes | `7AE5831130C3F819CD4AA402CC15D7389A5574D2199ECA2199F687AAC3C426DB` |
+| `release/MetroCommandCenter-0.5.0-Portable.exe` | 92,286,640 bytes | `DD9230B4C45A3EE23B06D1A303ABC60EFEBD5F331DEEEECA31E2BF50A107EE2D` |
 | `release/win-unpacked/MetroCommandCenter.exe` | 225,614,336 bytes | `3A610EBADA5B8AE2D08BCB9C4DE02FEAB818B53B6C7CDB0028476C0C027C3DD9` |
 
 ## Release decision checklist

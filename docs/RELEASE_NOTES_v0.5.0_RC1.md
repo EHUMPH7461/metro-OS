@@ -19,8 +19,8 @@ Metro Command Center v0.5.0 RC1 is a Windows testing candidate for Metro Refined
 
 ## Windows package names
 
-- `MetroCommandCenter-0.5.0-rc.1-Setup.exe`
-- `MetroCommandCenter-0.5.0-rc.1-Portable.exe`
+- `MetroCommandCenter-0.5.0-Setup.exe`
+- `MetroCommandCenter-0.5.0-Portable.exe`
 - `MetroCommandCenter.exe` in `release/win-unpacked/`
 
 ## RC limitations
